@@ -7,6 +7,7 @@
   import TabInterestingStats from './components/TabInterestingStats.svelte';
   import TabActivity from './components/TabActivity.svelte';
   import Footer from './components/Footer.svelte';
+  import Settings from './components/Settings.svelte';
 
   let activeTab = 'activity';
   let tabsElement;
@@ -26,7 +27,11 @@
       window.scrollTo({ top: y, behavior: 'smooth' });
     }
   }
-  
+
+  function openSettingsModal() {
+      document.getElementById("settings-modal").showModal();
+  }
+
 </script>
 
 
@@ -54,8 +59,11 @@
     <div class="mr-4">
       <ThemeSelector/>
     </div>
-    <button class="btn btn-ghost btn-circle">
-      <IconSettings class="h-5 w-5" />
+    <button
+        class="btn btn-ghost btn-circle"
+        on:click={() => openSettingsModal()}
+    >
+        <IconSettings class="h-5 w-5" />
     </button>
     <!-- <button class="btn btn-ghost btn-circle">
       <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"> <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" /> </svg>
@@ -79,9 +87,9 @@
     {#each tabs as tab}
       <button class="mr-4
                     { activeTab === tab.name ?
-                      'badge badge-lg badge-primary tab-active text-white' : 
+                      'badge badge-lg badge-primary tab-active text-white' :
                       'badge badge-lg badge-primary badge-outline'
-                    }" 
+                    }"
       on:click={() => setActiveTab(tab.name)}>
       {tab.label}
       </button>
@@ -100,12 +108,14 @@
   <Footer />
 </div>
 
+<Settings />
+
 <style>
 
   .fade-in {
     animation: fadeIn 0.5s ease-in;
   }
-  
+
   @keyframes fadeIn {
     from { opacity: 0; }
     to { opacity: 1; }
