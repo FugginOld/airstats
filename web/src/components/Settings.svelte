@@ -1,11 +1,153 @@
+<script>
+    import { onMount } from 'svelte';
+    import { settings } from '../stores/settings';
+    import { IconBrandGithub } from '@tabler/icons-svelte';
+
+
+    let activeMenuItem = 'display';
+    let isSaving = false;
+
+    let routeTableLimit;
+    let settingsChanged = false;
+    let version = { version: '...', commit: '...', date: '...' };
+
+    const menuItems = [
+        { id: 'display', label: 'Display' },
+        { id: 'about', label: 'About' }
+    ];
+
+    $: if ($settings.route_table_limit) {
+        if (!settingsChanged) {
+            routeTableLimit = parseInt($settings.route_table_limit.setting_value);
+        }
+    }
+
+    function handleSettingChange() {
+        settingsChanged = true;
+    }
+
+    async function saveSettings() {
+        isSaving = true;
+        const updates = {
+            route_table_limit: routeTableLimit.toString()
+        };
+
+        const success = await settings.save(updates);
+        if (success) {
+            settingsChanged = false;
+            const modal = document.getElementById('settings-modal');
+            if (modal) modal.close();
+        }
+        isSaving = false;
+    }
+
+    async function fetchVersion() {
+        try {
+            const response = await fetch('/api/version');
+            if (response.ok) {
+                version = await response.json();
+            }
+        } catch (error) {
+            console.error('Failed to fetch version:', error);
+        }
+    }
+
+    onMount(() => {
+        settings.load();
+        fetchVersion();
+    });
+</script>
+
 <dialog id="settings-modal" class="modal">
-    <div class="modal-box w-11/12 max-w-5xl">
-        <h3 class="text-xl font-bold text-center">Settings</h3>
-        <p class="py-4">text</p>
-        <div class="modal-action">
-            <form method="dialog">
-                <button class="btn">Close</button>
-            </form>
+    <div class="modal-box w-11/12 max-w-5xl h-[600px] p-0 relative">
+        <form method="dialog" class="absolute right-2 top-2 z-10">
+            <button class="btn btn-md btn-circle btn-ghost text-2xl">✕</button>
+        </form>
+        <div class="flex h-full">
+            <!-- Settings Menu -->
+            <div class="w-56 bg-base-200 p-4">
+                <h3 class="text-xl font-bold mb-6 px-3">Settings</h3>
+                <ul class="menu">
+                    {#each menuItems as item}
+                        <li>
+                            <button
+                                type="button"
+                                class="{activeMenuItem === item.id ? 'active' : ''}"
+                                on:click={() => activeMenuItem = item.id}
+                            >
+                                {item.label}
+                            </button>
+                        </li>
+                    {/each}
+                </ul>
+            </div>
+
+            <!-- Settings -->
+            <div class="flex-1 p-6 flex flex-col">
+                <div class="flex-1 {activeMenuItem === 'about' ? 'flex items-center justify-center' : ''}">
+                    {#if activeMenuItem === 'display'}
+                        <h4 class="text-lg font-semibold mb-6">Display Settings</h4>
+
+                        <div class="space-y-6">
+                            <!-- Route Table Limit Setting -->
+                            <div>
+                                <p class="text-xl font-extralight tracking-wider mb-4">Route Information</p>
+                                <p class="text-m text-base-content/70 mb-2">
+                                    Number of rows to display in "Route Information" tables
+                                </p>
+                                <input
+                                    id="route-table-limit"
+                                    type="number"
+                                    bind:value={routeTableLimit}
+                                    on:input={handleSettingChange}
+                                    min="1"
+                                    max="100"
+                                    class="input w-20"
+                                />
+                                <span class="ml-2 text-sm text-base-content/70">(1-100)</span>
+                            </div>
+                        </div>
+
+                    {:else if activeMenuItem === 'about'}
+                        <div class="text-center mx-auto">
+                            <div class="flex items-center justify-center gap-6 mb-2">
+                                <img src="/logo_icon.png" alt="Skystats Logo" class="w-32 h-32" />
+                                <h1 class="text-7xl font-normal text-primary drop-shadow-[0_0_15px_rgba(59,130,246,0.5)]">
+                                    SkyStats
+                                </h1>
+                            </div>
+                            <div class="mb-6 text-base-content/50">
+                                {#if version.version === "dev"}
+                                    {version.version} • {version.commit} • {version.date.toLocaleString()}
+                                {:else}
+                                    {version.version}
+                                {/if}
+                            </div>
+                            <a href="https://github.com/tomcarman/skystats" target="_blank" rel="noopener noreferrer" class="inline-flex items-center gap-2 opacity-50 hover:opacity-100 transition-opacity">
+                                <IconBrandGithub stroke={2} size={32} />
+                                <span>GitHub</span>
+                            </a>
+
+                            <p class="mt-6 text-sm text-base-content/50">
+                                Created by <a href="https://github.com/tomcarman" target="_blank" rel="noopener noreferrer" class="text-accent hover:text-primary transition-colors">@tomcarman</a> with support from the SDR Enthusiasts community. Join us on <a href="https://discord.gg/znkBr2eyev" target="_blank" rel="noopener noreferrer" class="text-accent hover:text-primary transition-colors">Discord</a>.
+                            </p>
+
+                        </div>
+                    {/if}
+                </div>
+
+                {#if activeMenuItem !== 'about'}
+                    <div class="modal-action justify-end">
+                        <button
+                            class="btn btn-primary"
+                            on:click={saveSettings}
+                            disabled={!settingsChanged || isSaving}
+                        >
+                            {isSaving ? 'Saving...' : 'Save'}
+                        </button>
+                    </div>
+                {/if}
+            </div>
         </div>
     </div>
 </dialog>
