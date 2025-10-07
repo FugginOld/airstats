@@ -34,8 +34,8 @@ type Row struct {
 type GitHubAPIResponse struct {
 	Files []struct {
 		SHA      string `json:"sha"`
-		Filename string `json:"filename"`
-	} `json:"files"`
+		Filename string `json:"name"`
+	}
 }
 
 func UpsertPlaneAlertDb(pg *postgres) error {
@@ -48,7 +48,10 @@ func UpsertPlaneAlertDb(pg *postgres) error {
 
 	needsUpdating, commitHash, err := checkForUpdates(pg, isCustomPlaneAlertUrl)
 	if err != nil {
-		return fmt.Errorf("Error checking for updates: %w", err)
+		fmt.Printf("Error checking for updates: %w\n", err)
+		fmt.Printf("Updating despite error checking.\n")
+		needsUpdating = true
+		commitHash = "failed_to_get_commit_hash"
 	}
 
 	if !needsUpdating {
@@ -230,7 +233,7 @@ func checkForUpdates(pg *postgres, isCustom bool) (needsUpdating bool, commitHas
 }
 
 func getLatestCommitHash() (string, error) {
-	resp, err := http.Get("https://api.github.com/repos/sdr-enthusiasts/plane-alert-db/commits/main")
+	resp, err := http.Get("https://api.github.com/repos/sdr-enthusiasts/plane-alert-db/contents/")
 	if err != nil {
 		return "", fmt.Errorf("Error retrieving latest commit hash for plane-alert-db: %w", err)
 	}
@@ -240,9 +243,12 @@ func getLatestCommitHash() (string, error) {
 	if err != nil {
 		return "", fmt.Errorf("Error reading response body for latest commit hash for plane-alert-db: %w", err)
 	}
+	if resp.StatusCode != 200 {
+		return "", fmt.Errorf("Error when getting hash for plane-alert-db-images.csv: github api returned http code: %s", resp.Status)
+	}
 
 	var commitResponse GitHubAPIResponse
-	err = json.Unmarshal(body, &commitResponse)
+	err = json.Unmarshal(body, &commitResponse.Files)
 	if err != nil {
 		return "", fmt.Errorf("Error parsing JSON response for latest commit hash: %w", err)
 	}
@@ -252,5 +258,7 @@ func getLatestCommitHash() (string, error) {
 			return file.SHA, nil
 		}
 	}
+	fmt.Printf("getLatestCommitHash failed, printing commitResponse\n%+v\n", commitResponse)
+	fmt.Printf("getLatestCommitHash failed, printing body\n%s\n", body)
 	return "", fmt.Errorf("Error finding plane-alert-db-images.csv commit hash")
 }
