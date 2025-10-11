@@ -8,6 +8,8 @@
     let isSaving = false;
 
     let routeTableLimit;
+    let interestingTableLimit;
+    let recordHolderTableLimit;
     let settingsChanged = false;
     let version = { version: '...', commit: '...', date: '...' };
 
@@ -16,9 +18,15 @@
         { id: 'about', label: 'About' }
     ];
 
-    $: if ($settings.route_table_limit) {
-        if (!settingsChanged) {
+    $: if (!settingsChanged) {
+        if ($settings.route_table_limit) {
             routeTableLimit = parseInt($settings.route_table_limit.setting_value);
+        }
+        if ($settings.interesting_table_limit) {
+            interestingTableLimit = parseInt($settings.interesting_table_limit.setting_value);
+        }
+        if ($settings.record_holder_table_limit) {
+            recordHolderTableLimit = parseInt($settings.record_holder_table_limit.setting_value);
         }
     }
 
@@ -35,7 +43,9 @@
 
         isSaving = true;
         const updates = {
-            route_table_limit: routeTableLimit.toString()
+            route_table_limit: routeTableLimit.toString(),
+            interesting_table_limit: interestingTableLimit.toString(),
+            record_holder_table_limit: recordHolderTableLimit.toString()
         };
 
         const success = await settings.save(updates);
@@ -95,7 +105,7 @@
                         <h4 class="text-lg font-semibold mb-6">Display Settings</h4>
 
                         <form id="display-settings-form" class="space-y-6">
-                            <!-- Route Table Limit Setting -->
+                            <!-- Route Table Limit -->
                             <div>
                                 <p class="text-xl font-extralight tracking-wider mb-4">Route Information</p>
                                 <p class="text-m text-base-content/70 mb-2">
@@ -105,6 +115,44 @@
                                     id="route-table-limit"
                                     type="number"
                                     bind:value={routeTableLimit}
+                                    on:input={handleSettingChange}
+                                    min="1"
+                                    max="100"
+                                    step="1"
+                                    required
+                                    class="input w-20"
+                                />
+                                <span class="ml-2 text-sm text-base-content/70">(1-100)</span>
+                            </div>
+                            <!-- Interesting Table Limit -->
+                            <div>
+                                <p class="text-xl font-extralight tracking-wider mb-4">Interesting Aircraft</p>
+                                <p class="text-m text-base-content/70 mb-2">
+                                    Number of rows to display in "Interesting Aircraft" tables
+                                </p>
+                                <input
+                                    id="interesting-table-limit"
+                                    type="number"
+                                    bind:value={interestingTableLimit}
+                                    on:input={handleSettingChange}
+                                    min="1"
+                                    max="100"
+                                    step="1"
+                                    required
+                                    class="input w-20"
+                                />
+                                <span class="ml-2 text-sm text-base-content/70">(1-100)</span>
+                            </div>
+                            <!-- Record Holder Table Limit -->
+                            <div>
+                                <p class="text-xl font-extralight tracking-wider mb-4">Record Holders</p>
+                                <p class="text-m text-base-content/70 mb-2">
+                                    Number of rows to display in "Record Holders" tables
+                                </p>
+                                <input
+                                    id="record-holder-table-limit"
+                                    type="number"
+                                    bind:value={recordHolderTableLimit}
                                     on:input={handleSettingChange}
                                     min="1"
                                     max="100"

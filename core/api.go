@@ -387,7 +387,7 @@ func (s *APIServer) getAboveStats(c *gin.Context) {
 
 func (s *APIServer) getRecentInterestingAircraft(c *gin.Context, group string) {
 
-	limit := s.getLimit()
+	limit := s.getLimit("interesting_table_limit")
 
 	query := `
 		WITH latest_unique_reg AS (
@@ -453,7 +453,7 @@ func (s *APIServer) getRecentInterestingAircraft(c *gin.Context, group string) {
 }
 
 func (s *APIServer) getFastestAircraft(c *gin.Context) {
-	limit := s.getLimit()
+	limit := s.getLimit("record_holder_table_limit")
 
 	query := `
 		SELECT hex, flight, registration, type, first_seen, last_seen, 
@@ -499,7 +499,7 @@ func (s *APIServer) getFastestAircraft(c *gin.Context) {
 }
 
 func (s *APIServer) getSlowestAircraft(c *gin.Context) {
-	limit := s.getLimit()
+	limit := s.getLimit("record_holder_table_limit")
 
 	query := `
 		SELECT hex, flight, registration, type, first_seen, last_seen, 
@@ -545,7 +545,7 @@ func (s *APIServer) getSlowestAircraft(c *gin.Context) {
 }
 
 func (s *APIServer) getHighestAircraft(c *gin.Context) {
-	limit := s.getLimit()
+	limit := s.getLimit("record_holder_table_limit")
 
 	query := `
 		SELECT hex, flight, registration, type, first_seen, last_seen, 
@@ -589,7 +589,7 @@ func (s *APIServer) getHighestAircraft(c *gin.Context) {
 }
 
 func (s *APIServer) getLowestAircraft(c *gin.Context) {
-	limit := s.getLimit()
+	limit := s.getLimit("record_holder_table_limit")
 
 	query := `
 		SELECT hex, flight, registration, type, first_seen, last_seen, 

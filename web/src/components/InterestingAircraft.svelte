@@ -1,5 +1,6 @@
 <script>
     import { onMount, onDestroy } from 'svelte'
+    import { refreshInterestingData } from '../stores/settings';
 
     export let endpoint;
     export let title;
@@ -60,6 +61,11 @@
             clearInterval(interval)
         }
     });
+
+    // Refresh when settings change
+    $: if ($refreshInterestingData) {
+        fetchData();
+    }
 
 </script>
 

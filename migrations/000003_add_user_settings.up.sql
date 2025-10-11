@@ -11,4 +11,6 @@ CREATE INDEX idx_user_settings_key ON user_settings(setting_key);
 
 -- Insert defaults
 INSERT INTO user_settings (setting_key, setting_value, description) VALUES
-    ('route_table_limit', '5', 'Number of rows to display in Route Information tables');
+    ('route_table_limit', '5', 'Number of rows to display in Route Information tables'),
+    ('interesting_table_limit', '5', 'Number of rows to display in Interesting Aircraft tables'),
+    ('record_holder_table_limit', '5', 'Number of rows to display in Record Holder tables');

@@ -5,6 +5,8 @@ const { subscribe, set, update } = writable({});
 // arbitrary counter that gets incremented on settings save to 
 // trigger refresh (there might be a better way...)
 export const refreshRouteData = writable(0);
+export const refreshInterestingData = writable(0);
+export const refreshRecordHolderData = writable(0);
 
 export const settings = {
     subscribe,
@@ -45,7 +47,15 @@ export const settings = {
                 set(settingsObj);
 
                 // increment counter to trigger refresh
-                refreshRouteData.update(n => n + 1);
+                if (updates.route_table_limit !== undefined) {
+                    refreshRouteData.update(n => n + 1);
+                }
+                if (updates.interesting_table_limit !== undefined) {
+                    refreshInterestingData.update(n => n + 1);
+                }
+                if (updates.record_holder_table_limit !== undefined) {
+                    refreshRecordHolderData.update(n => n + 1);
+                }
 
                 return true;
             }
