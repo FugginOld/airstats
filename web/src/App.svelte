@@ -26,7 +26,7 @@
       window.scrollTo({ top: y, behavior: 'smooth' });
     }
   }
-  
+
 </script>
 
 
@@ -47,7 +47,7 @@
   </div>
   <div class="navbar-center">
     <h1 class="text-4xl font-normal text-primary drop-shadow-[0_0_15px_rgba(59,130,246,0.5)]">
-      SkyStats
+      Skystats
     </h1>
   </div>
   <div class="navbar-end">
@@ -79,9 +79,9 @@
     {#each tabs as tab}
       <button class="mr-4
                     { activeTab === tab.name ?
-                      'badge badge-lg badge-primary tab-active text-white' : 
+                      'badge badge-lg badge-primary tab-active text-white' :
                       'badge badge-lg badge-primary badge-outline'
-                    }" 
+                    }"
       on:click={() => setActiveTab(tab.name)}>
       {tab.label}
       </button>
@@ -105,7 +105,7 @@
   .fade-in {
     animation: fadeIn 0.5s ease-in;
   }
-  
+
   @keyframes fadeIn {
     from { opacity: 0; }
     to { opacity: 1; }
