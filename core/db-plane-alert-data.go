@@ -48,7 +48,7 @@ func UpsertPlaneAlertDb(pg *postgres) error {
 
 	needsUpdating, commitHash, err := checkForUpdates(pg, isCustomPlaneAlertUrl)
 	if err != nil {
-		fmt.Printf("Error checking for updates: %w\n", err)
+		fmt.Printf("Error checking for updates: %v\n", err)
 		fmt.Printf("Updating despite error checking.\n")
 		needsUpdating = true
 		commitHash = "failed_to_get_commit_hash"

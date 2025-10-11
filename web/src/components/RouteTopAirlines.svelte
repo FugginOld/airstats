@@ -1,6 +1,7 @@
 <script>
     import { onMount, onDestroy } from 'svelte';
     import SkeletonRouteTable from './SkeletonRouteTable.svelte';
+    import { refreshRouteData } from '../stores/settings';
 
     let data = [];
     let endpoint = 'api/stats/routes/airlines'
@@ -35,6 +36,11 @@
             clearInterval(interval);
         }
     });
+
+    // Refresh when settings change
+    $: if ($refreshRouteData) {
+        fetchData();
+    }
 </script>
 
  {#if loading}

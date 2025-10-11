@@ -2,6 +2,7 @@
     import { onMount, onDestroy } from 'svelte';
     import "/node_modules/flag-icons/css/flag-icons.min.css";
     import SkeletonRouteTable from './SkeletonRouteTable.svelte';
+    import { refreshRouteData } from '../stores/settings';
 
 
     let data = [];
@@ -37,6 +38,11 @@
             clearInterval(interval);
         }
     });
+
+    // Refresh when settings change
+    $: if ($refreshRouteData) {
+        fetchData();
+    }
 </script>
 
  {#if loading}
