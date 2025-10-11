@@ -3,9 +3,9 @@
 </div>
 </br>
 <div align="center">
-    SkyStats is an application to retrieve, store, and display interesting aircraft ADS-B data received via an SDR.
+    Skystats is an application to retrieve, store, and display interesting aircraft ADS-B data received via an SDR.
     </br></br>
-    ⚠️ SkyStats is still in early development and considered "beta" so expect bugs and instability.
+    ⚠️ Skystats is still in early development and considered "beta" so expect bugs and instability.
 </div>
 </br>
 
@@ -39,7 +39,7 @@
 
 ### Running in Docker (recommended)
 
-Using SkyStats in Docker is the easiest way to get up and running.
+Using Skystats in Docker is the easiest way to get up and running.
 
 * Copy the contents of [`.env.example`](.env.example) into a new file called `.env`
 * Populate `.env` with all required values. See [Environment Variables](#environment-variables)
@@ -70,13 +70,13 @@ Alternatively there are some [Advanced Setup](#advanced-setup) options.
 
 ## Support / Feeback
 
-SkyStats is still under early active development. If you're having issues getting it running, or have suggestions/feedback, then the best place to get support is on the [#skystats](https://discord.gg/znkBr2eyev) channel in the [SDR Enthusiasts Discord](https://discord.gg/86Tyxjcd94). Alternatively you can raise an [Issue](https://github.com/tomcarman/skystats/issues) in GitHub, and I'll do my best to support.
+Skystats is still under early active development. If you're having issues getting it running, or have suggestions/feedback, then the best place to get support is on the [#skystats](https://discord.gg/znkBr2eyev) channel in the [SDR Enthusiasts Discord](https://discord.gg/86Tyxjcd94). Alternatively you can raise an [Issue](https://github.com/tomcarman/skystats/issues) in GitHub, and I'll do my best to support.
 </br>
 
 
 ## Advanced Setup
 
-The intention is for SkyStats to be run via the [provided Docker containers](#setup). However, if you want to run locally or if you want to contribute by developing, see below guidance.
+The intention is for Skystats to be run via the [provided Docker containers](#setup). However, if you want to run locally or if you want to contribute by developing, see below guidance.
 
 ### Running locally
 
@@ -97,7 +97,7 @@ The intention is for SkyStats to be run via the [provided Docker containers](#se
 * Compile with `go build -o skystats-daemon`
 * Run the app `./skystats-daemon`
     * It can be terminated via `kill $(cat skystats/core/skystats.pid)`
-* Run the webserver 
+* Run the webserver
     * Change to the /web directory e.g. `cd ../web`
     * Start the webserver with `npm run dev -- --host`
 * See [`build`](/scripts/build) for a script to automate some of this
