@@ -1,6 +1,7 @@
 <script>
 // @ts-nocheck
     import { onMount, onDestroy } from 'svelte';
+    import { refreshRecordHolderData } from '../stores/settings';
 
     export let endpoint;
     export let title;
@@ -40,6 +41,11 @@
             clearInterval(interval);
         }
     });
+    
+    // Refresh when settings change
+    $: if ($refreshRecordHolderData) {
+        fetchData();
+    }
 </script>
 
 <div>
