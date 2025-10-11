@@ -27,6 +27,12 @@
     }
 
     async function saveSettings() {
+        const form = document.getElementById('display-settings-form');
+        if (form && !form.checkValidity()) {
+            form.reportValidity();
+            return;
+        }
+
         isSaving = true;
         const updates = {
             route_table_limit: routeTableLimit.toString()
@@ -88,7 +94,7 @@
                     {#if activeMenuItem === 'display'}
                         <h4 class="text-lg font-semibold mb-6">Display Settings</h4>
 
-                        <div class="space-y-6">
+                        <form id="display-settings-form" class="space-y-6">
                             <!-- Route Table Limit Setting -->
                             <div>
                                 <p class="text-xl font-extralight tracking-wider mb-4">Route Information</p>
@@ -102,18 +108,20 @@
                                     on:input={handleSettingChange}
                                     min="1"
                                     max="100"
+                                    step="1"
+                                    required
                                     class="input w-20"
                                 />
                                 <span class="ml-2 text-sm text-base-content/70">(1-100)</span>
                             </div>
-                        </div>
+                        </form>
 
                     {:else if activeMenuItem === 'about'}
                         <div class="text-center mx-auto">
                             <div class="flex items-center justify-center gap-6 mb-2">
                                 <img src="/logo_icon.png" alt="Skystats Logo" class="w-32 h-32" />
                                 <h1 class="text-7xl font-normal text-primary drop-shadow-[0_0_15px_rgba(59,130,246,0.5)]">
-                                    SkyStats
+                                    Skystats
                                 </h1>
                             </div>
                             <div class="mb-6 text-base-content/50">
