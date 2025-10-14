@@ -1093,7 +1093,7 @@ func (s *APIServer) getChartFlightsOverTime(c *gin.Context, period string) {
 				),
 				counts AS (
 				SELECT
-					DATE(first_seen AT TIME ZONE 'UTC' AT TIME ZONE $1) AS day,
+					DATE(first_seen AT TIME ZONE $1) AS day,
 					COUNT(*) AS count
 				FROM aircraft_data
 				WHERE first_seen >= DATE(CURRENT_TIMESTAMP AT TIME ZONE $1) - INTERVAL '1 month'
@@ -1229,7 +1229,7 @@ func (s *APIServer) getChartAircraftOverTime(c *gin.Context, period string) {
 				),
 				counts AS (
 				SELECT
-					DATE(first_seen AT TIME ZONE 'UTC' AT TIME ZONE $1) AS day,
+					DATE(first_seen AT TIME ZONE $1) AS day,
 					COUNT(DISTINCT hex) AS count
 				FROM aircraft_data
 				WHERE first_seen >= DATE(CURRENT_TIMESTAMP AT TIME ZONE $1) - INTERVAL '1 month'
