@@ -1044,6 +1044,12 @@ func (s *APIServer) getTopInternationalAirports(c *gin.Context) {
 }
 
 func (s *APIServer) getChartFlightsOverTime(c *gin.Context, period string) {
+
+	tz := c.Query("tz")
+	if tz == "" {
+		tz = "UTC"
+	}
+
 	var query string
 	var seriesID, label, periodUnit string
 
@@ -1079,19 +1085,19 @@ func (s *APIServer) getChartFlightsOverTime(c *gin.Context, period string) {
 		label = "Flights Past Month"
 		periodUnit = "day"
 		query = `WITH days AS (
-				SELECT generate_series(
-					CURRENT_DATE - INTERVAL '1 month',
-					CURRENT_DATE,
-					'1 day'
-				)::date AS day
+				SELECT DATE(generate_series(
+					DATE(CURRENT_TIMESTAMP AT TIME ZONE $1) - INTERVAL '1 month',
+					DATE(CURRENT_TIMESTAMP AT TIME ZONE $1),
+					INTERVAL '1 day'
+				)) AS day
 				),
 				counts AS (
 				SELECT
-					DATE(first_seen) AS day,
+					DATE(first_seen AT TIME ZONE 'UTC' AT TIME ZONE $1) AS day,
 					COUNT(*) AS count
 				FROM aircraft_data
-				WHERE first_seen >= CURRENT_DATE - INTERVAL '1 month'
-					AND first_seen < CURRENT_DATE + INTERVAL '1 day'
+				WHERE first_seen >= DATE(CURRENT_TIMESTAMP AT TIME ZONE $1) - INTERVAL '1 month'
+  					AND first_seen < DATE(CURRENT_TIMESTAMP AT TIME ZONE $1) + INTERVAL '1 day'
 				GROUP BY 1
 				)
 				SELECT
@@ -1129,7 +1135,7 @@ func (s *APIServer) getChartFlightsOverTime(c *gin.Context, period string) {
 		return
 	}
 
-	rows, err := s.pg.db.Query(context.Background(), query)
+	rows, err := s.pg.db.Query(context.Background(), query, tz)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
@@ -1174,6 +1180,12 @@ func (s *APIServer) getChartFlightsOverTime(c *gin.Context, period string) {
 }
 
 func (s *APIServer) getChartAircraftOverTime(c *gin.Context, period string) {
+
+	tz := c.Query("tz")
+	if tz == "" {
+		tz = "UTC"
+	}
+
 	var query string
 	var seriesID, label, periodUnit string
 
@@ -1209,19 +1221,19 @@ func (s *APIServer) getChartAircraftOverTime(c *gin.Context, period string) {
 		label = "Aircraft Past Month"
 		periodUnit = "day"
 		query = `WITH days AS (
-				SELECT generate_series(
-					CURRENT_DATE - INTERVAL '1 month',
-					CURRENT_DATE,
-					'1 day'
-				)::date AS day
+				SELECT DATE(generate_series(
+					DATE(CURRENT_TIMESTAMP AT TIME ZONE $1) - INTERVAL '1 month',
+					DATE(CURRENT_TIMESTAMP AT TIME ZONE $1),
+					INTERVAL '1 day'
+				)) AS day
 				),
 				counts AS (
 				SELECT
-					DATE(first_seen) AS day,
+					DATE(first_seen AT TIME ZONE 'UTC' AT TIME ZONE $1) AS day,
 					COUNT(DISTINCT hex) AS count
 				FROM aircraft_data
-				WHERE first_seen >= CURRENT_DATE - INTERVAL '1 month'
-					AND first_seen < CURRENT_DATE + INTERVAL '1 day'
+				WHERE first_seen >= DATE(CURRENT_TIMESTAMP AT TIME ZONE $1) - INTERVAL '1 month'
+  				AND first_seen < DATE(CURRENT_TIMESTAMP AT TIME ZONE $1) + INTERVAL '1 day'
 				GROUP BY 1
 				)
 				SELECT
@@ -1262,7 +1274,7 @@ func (s *APIServer) getChartAircraftOverTime(c *gin.Context, period string) {
 		return
 	}
 
-	rows, err := s.pg.db.Query(context.Background(), query)
+	rows, err := s.pg.db.Query(context.Background(), query, tz)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
