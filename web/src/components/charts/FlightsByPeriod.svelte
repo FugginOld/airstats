@@ -117,21 +117,21 @@
     function getTooltipTitle(tooltipItems) {
         const index = tooltipItems[0].dataIndex;
         const date = chartData.labels[index];
-
+        
         if (period === 'year') {
             return `${MONTH_NAMES[date.getMonth()]} ${date.getFullYear()}`;
         } else if (period === 'month') {
-            return date.toLocaleDateString('en-US', {
-                weekday: 'short',
-                year: 'numeric',
-                month: 'short',
-                day: 'numeric',
-                timeZone: 'UTC'
+            return date.toLocaleDateString('en-US', { 
+                weekday: 'short', 
+                year: 'numeric', 
+                month: 'short', 
+                day: 'numeric' 
             });
         } else {
-            return date.toLocaleString('en-US', {
+            // For day view, show hour
+            return date.toLocaleString('en-US', { 
                 weekday: 'short',
-                month: 'short',
+                month: 'short', 
                 day: 'numeric',
                 hour: 'numeric',
                 minute: '2-digit',
@@ -144,13 +144,14 @@
     function getXAxisLabel(value, index) {
         const date = chartData.labels[index];
         if (!date) return value;
-
+        
         if (period === 'year') {
             return `${MONTH_NAMES[date.getMonth()].slice(0, 3)} ${date.getFullYear()}`;
         } else if (period === 'month') {
-            return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric', timeZone: 'UTC' });
+            return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
         } else {
-            return date.toLocaleString('en-US', {
+            // For day view, show hour
+            return date.toLocaleString('en-US', { 
                 hour: 'numeric',
                 hour12: true
             });

@@ -1098,8 +1098,8 @@ func (s *APIServer) getChartFlightsOverTime(c *gin.Context, period string) {
 		periodUnit = "day"
 		query = `WITH days AS (
 				SELECT generate_series(
-					CURRENT_TIMESTAMP::date - INTERVAL '1 month',
-					CURRENT_TIMESTAMP::date,
+					CURRENT_DATE - INTERVAL '1 month',
+					CURRENT_DATE,
 					'1 day'
 				)::date AS day
 				),
@@ -1108,13 +1108,13 @@ func (s *APIServer) getChartFlightsOverTime(c *gin.Context, period string) {
 					DATE(first_seen) AS day,
 					COUNT(*) AS count
 				FROM aircraft_data
-				WHERE first_seen >= (CURRENT_TIMESTAMP::date - INTERVAL '1 month')::timestamptz
-					AND first_seen < (CURRENT_TIMESTAMP::date + INTERVAL '1 day')::timestamptz
+				WHERE first_seen >= CURRENT_DATE - INTERVAL '1 month'
+					AND first_seen < CURRENT_DATE + INTERVAL '1 day'
 				GROUP BY 1
 				)
 				SELECT
-				d.day,
-				COALESCE(c.count, 0) AS count
+					TO_CHAR(d.day, 'YYYY-MM-DD HH24:MI:SS OF'),
+					COALESCE(c.count, 0) AS count
 				FROM days d
 				LEFT JOIN counts c USING (day)
 				ORDER BY d.day;`
@@ -1258,8 +1258,8 @@ func (s *APIServer) getChartAircraftOverTime(c *gin.Context, period string) {
 		periodUnit = "day"
 		query = `WITH days AS (
 				SELECT generate_series(
-					CURRENT_TIMESTAMP::date - INTERVAL '1 month',
-					CURRENT_TIMESTAMP::date,
+					CURRENT_DATE - INTERVAL '1 month',
+					CURRENT_DATE,
 					'1 day'
 				)::date AS day
 				),
@@ -1268,12 +1268,12 @@ func (s *APIServer) getChartAircraftOverTime(c *gin.Context, period string) {
 					DATE(first_seen) AS day,
 					COUNT(DISTINCT hex) AS count
 				FROM aircraft_data
-				WHERE first_seen >= (CURRENT_TIMESTAMP::date - INTERVAL '1 month')::timestamptz
-					AND first_seen < (CURRENT_TIMESTAMP::date + INTERVAL '1 day')::timestamptz
+				WHERE first_seen >= CURRENT_DATE - INTERVAL '1 month'
+					AND first_seen < CURRENT_DATE + INTERVAL '1 day'
 				GROUP BY 1
 				)
 				SELECT
-				d.day,
+					TO_CHAR(d.day, 'YYYY-MM-DD HH24:MI:SS OF'),
 				COALESCE(c.count, 0) AS count
 				FROM days d
 				LEFT JOIN counts c USING (day)
