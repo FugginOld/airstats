@@ -1113,7 +1113,7 @@ func (s *APIServer) getChartFlightsOverTime(c *gin.Context, period string) {
 				GROUP BY 1
 				)
 				SELECT
-					TO_CHAR(d.day, 'YYYY-MM-DD HH24:MI:SS OF'),
+					d.day::timestamptz,
 					COALESCE(c.count, 0) AS count
 				FROM days d
 				LEFT JOIN counts c USING (day)
@@ -1190,7 +1190,7 @@ func (s *APIServer) getChartFlightsOverTime(c *gin.Context, period string) {
 
 		err := rows.Scan(&timeVal, &count)
 		if err != nil {
-			continue
+			c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		}
 
 		results = append(results, ChartPoint{
@@ -1273,7 +1273,7 @@ func (s *APIServer) getChartAircraftOverTime(c *gin.Context, period string) {
 				GROUP BY 1
 				)
 				SELECT
-					TO_CHAR(d.day, 'YYYY-MM-DD HH24:MI:SS OF'),
+					d.day::timestamptz,
 				COALESCE(c.count, 0) AS count
 				FROM days d
 				LEFT JOIN counts c USING (day)
