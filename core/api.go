@@ -9,6 +9,7 @@ import (
 	"time"
 
 	"github.com/gin-gonic/gin"
+	"github.com/jackc/pgx/v5"
 )
 
 type APIServer struct {
@@ -27,6 +28,21 @@ func NewAPIServer(pg *postgres) *APIServer {
 		port:     port,
 		settings: NewSettingsService(pg),
 	}
+}
+
+func (s *APIServer) getTimezone(c *gin.Context) string {
+
+	tz := c.Query("tz")
+	if tz == "" {
+		return "UTC"
+	}
+
+	_, err := time.LoadLocation(tz)
+	if err != nil {
+		return "UTC"
+	}
+
+	return tz
 }
 
 func (s *APIServer) Start() {
@@ -1044,6 +1060,8 @@ func (s *APIServer) getTopInternationalAirports(c *gin.Context) {
 }
 
 func (s *APIServer) getChartFlightsOverTime(c *gin.Context, period string) {
+	tz := s.getTimezone(c)
+
 	var query string
 	var seriesID, label, periodUnit string
 
@@ -1080,8 +1098,8 @@ func (s *APIServer) getChartFlightsOverTime(c *gin.Context, period string) {
 		periodUnit = "day"
 		query = `WITH days AS (
 				SELECT generate_series(
-					CURRENT_DATE - INTERVAL '1 month',
-					CURRENT_DATE,
+					CURRENT_TIMESTAMP::date - INTERVAL '1 month',
+					CURRENT_TIMESTAMP::date,
 					'1 day'
 				)::date AS day
 				),
@@ -1090,8 +1108,8 @@ func (s *APIServer) getChartFlightsOverTime(c *gin.Context, period string) {
 					DATE(first_seen) AS day,
 					COUNT(*) AS count
 				FROM aircraft_data
-				WHERE first_seen >= CURRENT_DATE - INTERVAL '1 month'
-					AND first_seen < CURRENT_DATE + INTERVAL '1 day'
+				WHERE first_seen >= (CURRENT_TIMESTAMP::date - INTERVAL '1 month')::timestamptz
+					AND first_seen < (CURRENT_TIMESTAMP::date + INTERVAL '1 day')::timestamptz
 				GROUP BY 1
 				)
 				SELECT
@@ -1129,10 +1147,38 @@ func (s *APIServer) getChartFlightsOverTime(c *gin.Context, period string) {
 		return
 	}
 
-	rows, err := s.pg.db.Query(context.Background(), query)
-	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
-		return
+	var rows pgx.Rows
+	ctx := context.Background()
+
+	if period == "month" {
+		tx, err := s.pg.db.Begin(ctx)
+		if err != nil {
+			c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+			return
+		}
+		defer tx.Rollback(ctx)
+
+		_, err = tx.Exec(ctx, fmt.Sprintf("SET LOCAL TIME ZONE '%s'", tz))
+		if err != nil {
+			c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+			return
+		}
+
+		rows, err = tx.Query(ctx, query)
+		if err != nil {
+			c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+			return
+		}
+
+		defer tx.Commit(ctx)
+
+	} else {
+		var err error
+		rows, err = s.pg.db.Query(ctx, query)
+		if err != nil {
+			c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+			return
+		}
 	}
 	defer rows.Close()
 
@@ -1174,6 +1220,8 @@ func (s *APIServer) getChartFlightsOverTime(c *gin.Context, period string) {
 }
 
 func (s *APIServer) getChartAircraftOverTime(c *gin.Context, period string) {
+	tz := s.getTimezone(c)
+
 	var query string
 	var seriesID, label, periodUnit string
 
@@ -1210,8 +1258,8 @@ func (s *APIServer) getChartAircraftOverTime(c *gin.Context, period string) {
 		periodUnit = "day"
 		query = `WITH days AS (
 				SELECT generate_series(
-					CURRENT_DATE - INTERVAL '1 month',
-					CURRENT_DATE,
+					CURRENT_TIMESTAMP::date - INTERVAL '1 month',
+					CURRENT_TIMESTAMP::date,
 					'1 day'
 				)::date AS day
 				),
@@ -1220,8 +1268,8 @@ func (s *APIServer) getChartAircraftOverTime(c *gin.Context, period string) {
 					DATE(first_seen) AS day,
 					COUNT(DISTINCT hex) AS count
 				FROM aircraft_data
-				WHERE first_seen >= CURRENT_DATE - INTERVAL '1 month'
-					AND first_seen < CURRENT_DATE + INTERVAL '1 day'
+				WHERE first_seen >= (CURRENT_TIMESTAMP::date - INTERVAL '1 month')::timestamptz
+					AND first_seen < (CURRENT_TIMESTAMP::date + INTERVAL '1 day')::timestamptz
 				GROUP BY 1
 				)
 				SELECT
@@ -1262,10 +1310,38 @@ func (s *APIServer) getChartAircraftOverTime(c *gin.Context, period string) {
 		return
 	}
 
-	rows, err := s.pg.db.Query(context.Background(), query)
-	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
-		return
+	var rows pgx.Rows
+	ctx := context.Background()
+
+	if period == "month" {
+		tx, err := s.pg.db.Begin(ctx)
+		if err != nil {
+			c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+			return
+		}
+		defer tx.Rollback(ctx)
+
+		_, err = tx.Exec(ctx, fmt.Sprintf("SET LOCAL TIME ZONE '%s'", tz))
+		if err != nil {
+			c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+			return
+		}
+
+		rows, err = tx.Query(ctx, query)
+		if err != nil {
+			c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+			return
+		}
+
+		defer tx.Commit(ctx)
+
+	} else {
+		var err error
+		rows, err = s.pg.db.Query(ctx, query)
+		if err != nil {
+			c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+			return
+		}
 	}
 	defer rows.Close()
 
