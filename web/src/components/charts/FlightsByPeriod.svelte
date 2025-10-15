@@ -20,7 +20,8 @@
 
     /* Data setup */
 
-    const endpoint = `api/stats/charts/${type}/${period}`;
+    const timezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
+    const endpoint = `api/stats/charts/${type}/${period}?tz=${encodeURIComponent(timezone)}`;
 
     async function fetchData() {
         try {
