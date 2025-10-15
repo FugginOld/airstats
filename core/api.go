@@ -1061,6 +1061,10 @@ func (s *APIServer) getTopInternationalAirports(c *gin.Context) {
 
 func (s *APIServer) getChartFlightsOverTime(c *gin.Context, period string) {
 	tz := s.getTimezone(c)
+	loc, err := time.LoadLocation(tz)
+	if err != nil {
+		loc = time.UTC
+	}
 
 	var query string
 	var seriesID, label, periodUnit string
@@ -1087,7 +1091,7 @@ func (s *APIServer) getChartFlightsOverTime(c *gin.Context, period string) {
 				GROUP BY 1
 				)
 				SELECT
-				m.month,
+				m.month::timestamptz,
 				COALESCE(c.count, 0) AS count
 				FROM months m
 				LEFT JOIN counts c USING (month)
@@ -1150,7 +1154,7 @@ func (s *APIServer) getChartFlightsOverTime(c *gin.Context, period string) {
 	var rows pgx.Rows
 	ctx := context.Background()
 
-	if period == "month" {
+	if period == "month" || period == "year" {
 		tx, err := s.pg.db.Begin(ctx)
 		if err != nil {
 			c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
@@ -1194,7 +1198,7 @@ func (s *APIServer) getChartFlightsOverTime(c *gin.Context, period string) {
 		}
 
 		results = append(results, ChartPoint{
-			X: timeVal,
+			X: timeVal.In(loc),
 			Y: float64(count),
 		})
 	}
@@ -1209,9 +1213,8 @@ func (s *APIServer) getChartFlightsOverTime(c *gin.Context, period string) {
 			},
 		},
 		X: ChartXAxisMeta{
-			Type:     "time",
-			Timezone: "UTC",
-			Unit:     periodUnit,
+			Type: "time",
+			Unit: periodUnit,
 		},
 		Meta: ChartMeta{
 			GeneratedAt: time.Now(),
@@ -1221,6 +1224,10 @@ func (s *APIServer) getChartFlightsOverTime(c *gin.Context, period string) {
 
 func (s *APIServer) getChartAircraftOverTime(c *gin.Context, period string) {
 	tz := s.getTimezone(c)
+	loc, err := time.LoadLocation(tz)
+	if err != nil {
+		loc = time.UTC
+	}
 
 	var query string
 	var seriesID, label, periodUnit string
@@ -1247,7 +1254,7 @@ func (s *APIServer) getChartAircraftOverTime(c *gin.Context, period string) {
 				GROUP BY 1
 				)
 				SELECT
-				m.month,
+				m.month::timestamptz,
 				COALESCE(c.count, 0) AS count
 				FROM months m
 				LEFT JOIN counts c USING (month)
@@ -1313,7 +1320,7 @@ func (s *APIServer) getChartAircraftOverTime(c *gin.Context, period string) {
 	var rows pgx.Rows
 	ctx := context.Background()
 
-	if period == "month" {
+	if period == "month" || period == "year" {
 		tx, err := s.pg.db.Begin(ctx)
 		if err != nil {
 			c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
@@ -1356,8 +1363,10 @@ func (s *APIServer) getChartAircraftOverTime(c *gin.Context, period string) {
 			continue
 		}
 
+		fmt.Printf("Time: %s, Count: %d\n", timeVal, count)
+
 		results = append(results, ChartPoint{
-			X: timeVal,
+			X: timeVal.In(loc),
 			Y: float64(count),
 		})
 	}
@@ -1372,9 +1381,8 @@ func (s *APIServer) getChartAircraftOverTime(c *gin.Context, period string) {
 			},
 		},
 		X: ChartXAxisMeta{
-			Type:     "time",
-			Timezone: "UTC",
-			Unit:     periodUnit,
+			Type: "time",
+			Unit: periodUnit,
 		},
 		Meta: ChartMeta{
 			GeneratedAt: time.Now(),
