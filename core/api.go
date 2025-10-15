@@ -1363,8 +1363,6 @@ func (s *APIServer) getChartAircraftOverTime(c *gin.Context, period string) {
 			continue
 		}
 
-		fmt.Printf("Time: %s, Count: %d\n", timeVal, count)
-
 		results = append(results, ChartPoint{
 			X: timeVal.In(loc),
 			Y: float64(count),
