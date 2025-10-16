@@ -9,6 +9,7 @@ import (
 	"time"
 
 	"github.com/gin-gonic/gin"
+	"github.com/jackc/pgx/v5"
 )
 
 type APIServer struct {
@@ -27,6 +28,21 @@ func NewAPIServer(pg *postgres) *APIServer {
 		port:     port,
 		settings: NewSettingsService(pg),
 	}
+}
+
+func (s *APIServer) getTimezone(c *gin.Context) string {
+
+	tz := c.Query("tz")
+	if tz == "" {
+		return "UTC"
+	}
+
+	_, err := time.LoadLocation(tz)
+	if err != nil {
+		return "UTC"
+	}
+
+	return tz
 }
 
 func (s *APIServer) Start() {
@@ -1044,6 +1060,12 @@ func (s *APIServer) getTopInternationalAirports(c *gin.Context) {
 }
 
 func (s *APIServer) getChartFlightsOverTime(c *gin.Context, period string) {
+	tz := s.getTimezone(c)
+	loc, err := time.LoadLocation(tz)
+	if err != nil {
+		loc = time.UTC
+	}
+
 	var query string
 	var seriesID, label, periodUnit string
 
@@ -1069,7 +1091,7 @@ func (s *APIServer) getChartFlightsOverTime(c *gin.Context, period string) {
 				GROUP BY 1
 				)
 				SELECT
-				m.month,
+				m.month::timestamptz,
 				COALESCE(c.count, 0) AS count
 				FROM months m
 				LEFT JOIN counts c USING (month)
@@ -1095,8 +1117,8 @@ func (s *APIServer) getChartFlightsOverTime(c *gin.Context, period string) {
 				GROUP BY 1
 				)
 				SELECT
-				d.day,
-				COALESCE(c.count, 0) AS count
+					d.day::timestamptz,
+					COALESCE(c.count, 0) AS count
 				FROM days d
 				LEFT JOIN counts c USING (day)
 				ORDER BY d.day;`
@@ -1129,10 +1151,38 @@ func (s *APIServer) getChartFlightsOverTime(c *gin.Context, period string) {
 		return
 	}
 
-	rows, err := s.pg.db.Query(context.Background(), query)
-	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
-		return
+	var rows pgx.Rows
+	ctx := context.Background()
+
+	if period == "month" || period == "year" {
+		tx, err := s.pg.db.Begin(ctx)
+		if err != nil {
+			c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+			return
+		}
+		defer tx.Rollback(ctx)
+
+		_, err = tx.Exec(ctx, fmt.Sprintf("SET LOCAL TIME ZONE '%s'", tz))
+		if err != nil {
+			c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+			return
+		}
+
+		rows, err = tx.Query(ctx, query)
+		if err != nil {
+			c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+			return
+		}
+
+		defer tx.Commit(ctx)
+
+	} else {
+		var err error
+		rows, err = s.pg.db.Query(ctx, query)
+		if err != nil {
+			c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+			return
+		}
 	}
 	defer rows.Close()
 
@@ -1144,11 +1194,11 @@ func (s *APIServer) getChartFlightsOverTime(c *gin.Context, period string) {
 
 		err := rows.Scan(&timeVal, &count)
 		if err != nil {
-			continue
+			c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		}
 
 		results = append(results, ChartPoint{
-			X: timeVal,
+			X: timeVal.In(loc),
 			Y: float64(count),
 		})
 	}
@@ -1163,9 +1213,8 @@ func (s *APIServer) getChartFlightsOverTime(c *gin.Context, period string) {
 			},
 		},
 		X: ChartXAxisMeta{
-			Type:     "time",
-			Timezone: "UTC",
-			Unit:     periodUnit,
+			Type: "time",
+			Unit: periodUnit,
 		},
 		Meta: ChartMeta{
 			GeneratedAt: time.Now(),
@@ -1174,6 +1223,12 @@ func (s *APIServer) getChartFlightsOverTime(c *gin.Context, period string) {
 }
 
 func (s *APIServer) getChartAircraftOverTime(c *gin.Context, period string) {
+	tz := s.getTimezone(c)
+	loc, err := time.LoadLocation(tz)
+	if err != nil {
+		loc = time.UTC
+	}
+
 	var query string
 	var seriesID, label, periodUnit string
 
@@ -1199,7 +1254,7 @@ func (s *APIServer) getChartAircraftOverTime(c *gin.Context, period string) {
 				GROUP BY 1
 				)
 				SELECT
-				m.month,
+				m.month::timestamptz,
 				COALESCE(c.count, 0) AS count
 				FROM months m
 				LEFT JOIN counts c USING (month)
@@ -1225,7 +1280,7 @@ func (s *APIServer) getChartAircraftOverTime(c *gin.Context, period string) {
 				GROUP BY 1
 				)
 				SELECT
-				d.day,
+					d.day::timestamptz,
 				COALESCE(c.count, 0) AS count
 				FROM days d
 				LEFT JOIN counts c USING (day)
@@ -1262,10 +1317,38 @@ func (s *APIServer) getChartAircraftOverTime(c *gin.Context, period string) {
 		return
 	}
 
-	rows, err := s.pg.db.Query(context.Background(), query)
-	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
-		return
+	var rows pgx.Rows
+	ctx := context.Background()
+
+	if period == "month" || period == "year" {
+		tx, err := s.pg.db.Begin(ctx)
+		if err != nil {
+			c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+			return
+		}
+		defer tx.Rollback(ctx)
+
+		_, err = tx.Exec(ctx, fmt.Sprintf("SET LOCAL TIME ZONE '%s'", tz))
+		if err != nil {
+			c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+			return
+		}
+
+		rows, err = tx.Query(ctx, query)
+		if err != nil {
+			c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+			return
+		}
+
+		defer tx.Commit(ctx)
+
+	} else {
+		var err error
+		rows, err = s.pg.db.Query(ctx, query)
+		if err != nil {
+			c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+			return
+		}
 	}
 	defer rows.Close()
 
@@ -1281,7 +1364,7 @@ func (s *APIServer) getChartAircraftOverTime(c *gin.Context, period string) {
 		}
 
 		results = append(results, ChartPoint{
-			X: timeVal,
+			X: timeVal.In(loc),
 			Y: float64(count),
 		})
 	}
@@ -1296,9 +1379,8 @@ func (s *APIServer) getChartAircraftOverTime(c *gin.Context, period string) {
 			},
 		},
 		X: ChartXAxisMeta{
-			Type:     "time",
-			Timezone: "UTC",
-			Unit:     periodUnit,
+			Type: "time",
+			Unit: periodUnit,
 		},
 		Meta: ChartMeta{
 			GeneratedAt: time.Now(),
