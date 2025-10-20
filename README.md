@@ -110,12 +110,12 @@ If you live in an area where you frequently see planes that you are not interest
 
 This expects a file identical in structure to https://github.com/sdr-enthusiasts/plane-alert-db/blob/main/plane-alert-db-images.csv
 
-Add the following the the `.env` file:
+Add the following to the `.env` file:
 ```
 PLANE_DB_URL=some/custom/location/plane-alert-db.csv
 ```
 
-And the following to `docker-compose.yml` under the `skystats-db-init` service:
+And the following to `compose.yml` under the `skystats` service:
 ```
 - PLANE_DB_URL=${PLANE_DB_URL}
 ```
