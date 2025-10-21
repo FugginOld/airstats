@@ -1,8 +1,6 @@
 module github.com/tomcarman/skystats
 
-go 1.23.0
-
-toolchain go1.23.10
+go 1.25.3
 
 require github.com/JamesLMilner/cheap-ruler-go v0.0.0-20191212211616-0919b75413a9
 
