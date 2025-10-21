@@ -10,6 +10,7 @@ import (
 	"time"
 
 	"github.com/joho/godotenv"
+	// "github.com/rs/zerolog/log"
 	"github.com/sevlyar/go-daemon"
 )
 
@@ -23,6 +24,11 @@ func main() {
 			log.Println("No .env file found, using environment variables")
 		}
 	}
+
+	// LogLevel = strings.ToUpper(os.Getenv("LOG_LEVEL"))
+	// if LogLevel == "" {
+	// 	LogLevel = "INFO"
+	// }
 
 	// If running outside of docker, run as a daemon
 	if os.Getenv("DOCKER_ENV") != "true" {
