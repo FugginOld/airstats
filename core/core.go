@@ -70,11 +70,6 @@ func main() {
 		log.Info().Msg("Skystats: Running in daemon mode")
 	}
 
-	// Welcome to skystats
-	if banner, err := os.ReadFile("../docs/logo/skystats_ascii.txt"); err == nil {
-		log.Info().Msg("\n" + string(banner))
-	}
-
 	url := GetConnectionUrl()
 
 	log.Info().Msg("Connecting to Postgres database")
@@ -105,11 +100,19 @@ func main() {
 		apiServer.Start()
 	}()
 
+	log.Info().Msg("Starting scheduled tasks")
+
 	updateAircraftDataTicker := time.NewTicker(2 * time.Second)
 	updateStatisticsTicker := time.NewTicker(120 * time.Second)
 	updateRegistrationsTicker := time.NewTicker(30 * time.Second)
 	updateRoutesTicker := time.NewTicker(300 * time.Second)
 	updateInterestingSeenTicker := time.NewTicker(120 * time.Second)
+
+	// Welcome to skystats
+	if banner, err := os.ReadFile("../docs/logo/skystats_ascii.txt"); err == nil {
+		log.Info().Msg("\n" + string(banner))
+	}
+	log.Info().Msg("Welcome to Skystats!")
 
 	defer func() {
 		log.Info().Msg("Closing database connection")
