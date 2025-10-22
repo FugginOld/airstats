@@ -47,7 +47,17 @@ func (s *APIServer) getTimezone(c *gin.Context) string {
 }
 
 func (s *APIServer) Start() {
-	r := gin.Default()
+
+	// Start gin API server in release or debug mode based on LOG_LEVEL
+	logLevel := os.Getenv("LOG_LEVEL")
+	var r *gin.Engine
+	if logLevel == "DEBUG" || logLevel == "TRACE" {
+		r = gin.Default()
+	} else {
+		gin.SetMode(gin.ReleaseMode)
+		r = gin.New()
+		r.Use(gin.Recovery())
+	}
 
 	r.Use(func(c *gin.Context) {
 		c.Header("Access-Control-Allow-Origin", "*")
