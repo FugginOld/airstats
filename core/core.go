@@ -3,14 +3,13 @@ package main
 import (
 	"context"
 	"flag"
-	"fmt"
-	"log"
 	"os"
 	"path/filepath"
 	"time"
 
 	"github.com/joho/godotenv"
-	// "github.com/rs/zerolog/log"
+	"github.com/rs/zerolog"
+	"github.com/rs/zerolog/log"
 	"github.com/sevlyar/go-daemon"
 )
 
@@ -18,10 +17,15 @@ func main() {
 
 	checkFlags()
 
+	zerolog.SetGlobalLevel(zerolog.DebugLevel)
+
+	log.Logger = log.Output(zerolog.ConsoleWriter{Out: os.Stderr, NoColor: true})
+	log.Info().Msg("hello world")
+
 	// Load .env file
 	if err := godotenv.Load("../.env"); err != nil {
 		if err := godotenv.Load(); err != nil {
-			log.Println("No .env file found, using environment variables")
+			log.Warn().Msg("No .env file found, using environment variables")
 		}
 	}
 
@@ -46,15 +50,14 @@ func main() {
 
 		d, err := cntxt.Reborn()
 		if err != nil {
-			fmt.Println("Unable to run: ", err)
-			log.Fatal("Unable to run: ", err)
+			log.Fatal().Err(err).Msg("Failed to launch daemon")
 		}
 		if d != nil {
 			return
 		}
 		defer cntxt.Release()
 
-		log.Print("Skystats: Running in daemon mode")
+		log.Info().Msg("Skystats: Running in daemon mode")
 	}
 
 	// Welcome to skystats
@@ -63,28 +66,30 @@ func main() {
 	}
 
 	url := GetConnectionUrl()
-	log.Printf("Connecting to postgres database...")
+
+	log.Info().Msg("Connecting to Postgres database")
+
 	pg, err := NewPG(context.Background(), url)
 	if err != nil {
-		fmt.Println(err)
+		log.Fatal().Err(err).Msg("Failed to connect to Postgres database")
 		os.Exit(1)
 	}
 
 	// Setup db
-	log.Println("Running database initialisation / migrations...")
+	log.Info().Msg("Checking to see if any database initialisation / migrations are needed")
 	if err := RunDatabaseMigrations(); err != nil {
 		log.Printf("Error initialising or migrating the database: %v", err)
 		os.Exit(1)
 	}
 
-	log.Println("Updating database with plane-alert-db data...")
+	log.Info().Msg("Updating database with plane-alert-db data")
 	if err := UpsertPlaneAlertDb(pg); err != nil {
-		log.Printf("Error updating interesting aircraft data: %v", err)
+		log.Error().Msgf("Error updating interesting aircraft data: %v", err)
 		os.Exit(1)
 	}
 
 	// Start API server in a separate goroutine
-	log.Println("Starting API server...")
+	log.Info().Msg("Starting API server")
 	go func() {
 		apiServer := NewAPIServer(pg)
 		apiServer.Start()
@@ -97,7 +102,7 @@ func main() {
 	updateInterestingSeenTicker := time.NewTicker(120 * time.Second)
 
 	defer func() {
-		fmt.Println("Closing database connection")
+		log.Info().Msg("Closing database connection")
 		updateAircraftDataTicker.Stop()
 		updateStatisticsTicker.Stop()
 		updateRegistrationsTicker.Stop()
@@ -109,19 +114,19 @@ func main() {
 	for {
 		select {
 		case <-updateAircraftDataTicker.C:
-			fmt.Println("Update Aircraft: ", time.Now().Format("2006-01-02 15:04:05"))
+			log.Debug().Msgf("Update Aircraft: %s", time.Now().Format("2006-01-02 15:04:05"))
 			updateAircraftDatabase(pg)
 		case <-updateStatisticsTicker.C:
-			fmt.Println("Update Statistics: ", time.Now().Format("2006-01-02 15:04:05"))
+			log.Debug().Msgf("Update Statistics: %s", time.Now().Format("2006-01-02 15:04:05"))
 			updateMeasurementStatistics(pg)
 		case <-updateRegistrationsTicker.C:
-			fmt.Println("Update Registrations: ", time.Now().Format("2006-01-02 15:04:05"))
+			log.Debug().Msgf("Update Registrations: %s", time.Now().Format("2006-01-02 15:04:05"))
 			updateRegistrations(pg)
 		case <-updateRoutesTicker.C:
-			fmt.Println("Update Routes: ", time.Now().Format("2006-01-02 15:04:05"))
+			log.Debug().Msgf("Update Routes: %s", time.Now().Format("2006-01-02 15:04:05"))
 			updateRoutes(pg)
 		case <-updateInterestingSeenTicker.C:
-			fmt.Println("Update Interesting Seen: ", time.Now().Format("2006-01-02 15:04:05"))
+			log.Debug().Msgf("Update Interesting Seen: %s", time.Now().Format("2006-01-02 15:04:05"))
 			updateInterestingSeen(pg)
 		}
 	}
