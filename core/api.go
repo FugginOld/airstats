@@ -10,6 +10,7 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"github.com/jackc/pgx/v5"
+	"github.com/rs/zerolog/log"
 )
 
 type APIServer struct {
@@ -273,7 +274,7 @@ func (s *APIServer) getAboveStats(c *gin.Context) {
 	radiusValue := os.Getenv("ABOVE_RADIUS")
 	radius, err := strconv.Atoi(radiusValue)
 	if err != nil || radius <= 0 {
-		fmt.Println("Error parsing ABOVE_RADIUS environment variable ", err)
+		log.Error().Err(err).Msg("Error parsing ABOVE_RADIUS environment variable")
 		return
 	}
 
@@ -360,7 +361,7 @@ func (s *APIServer) getAboveStats(c *gin.Context) {
 			&originICAOCode, &originName, &destinationCountryName, &destinationCountryISOName,
 			&destinationIATACode, &destinationICAOCode, &destinationName, &routeDistance)
 		if err != nil {
-			fmt.Println("Error in getAboveStats() ", err)
+			log.Error().Err(err).Msg("getAboveStats()")
 			continue
 		}
 
@@ -693,8 +694,6 @@ func (s *APIServer) getTopAircraftTypes(c *gin.Context, period string, flightora
 				) top_15
 				ORDER BY count DESC LIMIT 15`
 
-	// for debugging:
-	// fmt.Printf("Executing query: %s\n", query)
 	rows, err := s.pg.db.Query(context.Background(), query)
 
 	if err != nil {

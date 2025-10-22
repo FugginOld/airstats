@@ -88,11 +88,11 @@ func main() {
 	// Setup db
 	log.Info().Msg("Checking to see if any database initialisation / migrations are needed")
 	if err := RunDatabaseMigrations(); err != nil {
-		log.Printf("Error initialising or migrating the database: %v", err)
+		log.Error().Err(err).Msg("Error initialising or migrating the database")
 		os.Exit(1)
 	}
 
-	log.Info().Msg("Updating database with plane-alert-db data")
+	log.Info().Msg("Checking if interesting aircraft reference data needs updating from plane-alert-db")
 	if err := UpsertPlaneAlertDb(pg); err != nil {
 		log.Error().Msgf("Error updating interesting aircraft data: %v", err)
 		os.Exit(1)
