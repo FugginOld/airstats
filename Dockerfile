@@ -34,5 +34,6 @@ ENV \
 COPY --from=node /app/dist /app/dist
 COPY --from=builder /app/skystats /app/core/skystats
 COPY migrations /app/migrations
+COPY docs/logo /app/docs/logo
 
 COPY rootfs/ /
