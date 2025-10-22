@@ -17,10 +17,13 @@ func main() {
 
 	checkFlags()
 
-	zerolog.SetGlobalLevel(zerolog.DebugLevel)
-
-	log.Logger = log.Output(zerolog.ConsoleWriter{Out: os.Stderr, NoColor: true})
-	log.Info().Msg("hello world")
+	// Initialize logger
+	consoleWriter := zerolog.ConsoleWriter{
+		Out:          os.Stderr,
+		TimeFormat:   "2006-01-02 15:04:05",
+		TimeLocation: time.Local,
+	}
+	log.Logger = log.Output(consoleWriter)
 
 	// Load .env file
 	if err := godotenv.Load("../.env"); err != nil {
@@ -29,13 +32,14 @@ func main() {
 		}
 	}
 
-	// LogLevel = strings.ToUpper(os.Getenv("LOG_LEVEL"))
-	// if LogLevel == "" {
-	// 	LogLevel = "INFO"
-	// }
+	// Set log level
+	if os.Getenv("DOCKER_ENV") == "true" {
+		setLogLevel()
+	}
 
 	// If running outside of docker, run as a daemon
 	if os.Getenv("DOCKER_ENV") != "true" {
+
 		execPath, _ := os.Executable()
 		execDir := filepath.Dir(execPath)
 
@@ -49,6 +53,7 @@ func main() {
 		}
 
 		d, err := cntxt.Reborn()
+
 		if err != nil {
 			log.Fatal().Err(err).Msg("Failed to launch daemon")
 		}
@@ -57,12 +62,17 @@ func main() {
 		}
 		defer cntxt.Release()
 
+		// when running as daemon, logs are written to file, disable ansi colors + set log level
+		consoleWriter.NoColor = true
+		log.Logger = log.Output(consoleWriter)
+		setLogLevel()
+
 		log.Info().Msg("Skystats: Running in daemon mode")
 	}
 
 	// Welcome to skystats
 	if banner, err := os.ReadFile("../docs/logo/skystats_ascii.txt"); err == nil {
-		log.Print("\n" + string(banner))
+		log.Info().Msg("\n" + string(banner))
 	}
 
 	url := GetConnectionUrl()
@@ -114,19 +124,19 @@ func main() {
 	for {
 		select {
 		case <-updateAircraftDataTicker.C:
-			log.Debug().Msgf("Update Aircraft: %s", time.Now().Format("2006-01-02 15:04:05"))
+			log.Debug().Msg("Update Aircraft")
 			updateAircraftDatabase(pg)
 		case <-updateStatisticsTicker.C:
-			log.Debug().Msgf("Update Statistics: %s", time.Now().Format("2006-01-02 15:04:05"))
+			log.Debug().Msg("Update Statistics")
 			updateMeasurementStatistics(pg)
 		case <-updateRegistrationsTicker.C:
-			log.Debug().Msgf("Update Registrations: %s", time.Now().Format("2006-01-02 15:04:05"))
+			log.Debug().Msg("Update Aircraft Registration")
 			updateRegistrations(pg)
 		case <-updateRoutesTicker.C:
-			log.Debug().Msgf("Update Routes: %s", time.Now().Format("2006-01-02 15:04:05"))
+			log.Debug().Msg("Update Routes")
 			updateRoutes(pg)
 		case <-updateInterestingSeenTicker.C:
-			log.Debug().Msgf("Update Interesting Seen: %s", time.Now().Format("2006-01-02 15:04:05"))
+			log.Debug().Msg("Update Interesting Seen")
 			updateInterestingSeen(pg)
 		}
 	}
@@ -137,5 +147,25 @@ func checkFlags() {
 	flag.Parse()
 	if showVersion {
 		showVersionExit()
+	}
+}
+
+func setLogLevel() {
+	switch os.Getenv("LOG_LEVEL") {
+	case "DEBUG":
+		zerolog.SetGlobalLevel(zerolog.DebugLevel)
+		log.Info().Msg("Log level set to DEBUG")
+	case "INFO":
+		zerolog.SetGlobalLevel(zerolog.InfoLevel)
+		log.Info().Msg("Log level set to INFO")
+	case "WARN":
+		zerolog.SetGlobalLevel(zerolog.WarnLevel)
+		log.Warn().Msg("Log level set to WARN")
+	case "ERROR":
+		zerolog.SetGlobalLevel(zerolog.ErrorLevel)
+		log.Error().Msg("Log level set to ERROR")
+	default:
+		zerolog.SetGlobalLevel(zerolog.InfoLevel)
+		log.Info().Msg("Log level not set or invalid, defaulting to INFO")
 	}
 }
