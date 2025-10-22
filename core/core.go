@@ -28,7 +28,7 @@ func main() {
 	// Load .env file
 	if err := godotenv.Load("../.env"); err != nil {
 		if err := godotenv.Load(); err != nil {
-			log.Warn().Msg("No .env file found, using environment variables")
+			log.Info().Msg("No .env file found, using environment variables")
 		}
 	}
 
