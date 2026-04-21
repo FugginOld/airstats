@@ -69,7 +69,7 @@
                 version = await response.json();
             }
         } catch (error) {
-            console.error('Failed to fetch version:', error);
+            // version fetch failure is non-fatal
         }
     }
 

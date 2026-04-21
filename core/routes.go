@@ -80,7 +80,7 @@ func unprocessedRoutes(pg *postgres) []Aircraft {
 
 		if err != nil {
 			log.Error().Err(err).Msg("unprocessedRoutes() - Error scanning rows")
-			return nil
+			continue
 		}
 
 		aircrafts = append(aircrafts, aircraft)
@@ -161,11 +161,7 @@ func getRoutes(aircrafts []Aircraft) ([]RouteInfo, error) {
 	req.Header.Set("User-Agent", fmt.Sprintf("Skystats/%s", version))
 	req.Header.Set("Accept", "application/json")
 
-	client := &http.Client{
-		Timeout: 5 * time.Second,
-	}
-
-	resp, err := client.Do(req)
+	resp, err := httpClient.Do(req)
 	if err != nil {
 		return nil, err
 	}

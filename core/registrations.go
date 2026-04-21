@@ -3,6 +3,7 @@ package main
 import (
 	"context"
 	"encoding/json"
+	"fmt"
 	"io"
 	"net/http"
 	"strings"
@@ -118,20 +119,25 @@ func getRegistration(aircraft Aircraft) (*RegistrationInfo, error) {
 	url := "https://api.adsbdb.com/v0/aircraft/"
 	url += aircraft.Hex
 
-	response, err := http.Get(url)
-
+	response, err := httpClient.Get(url)
 	if err != nil {
 		return nil, err
 	}
+	defer response.Body.Close()
+
+	if response.StatusCode != http.StatusOK {
+		return nil, fmt.Errorf("unexpected status fetching registration for %s: %s", aircraft.Hex, response.Status)
+	}
 
 	data, err := io.ReadAll(response.Body)
-
 	if err != nil {
 		return nil, err
 	}
 
 	var registrationResponse RegistrationInfo
-	json.Unmarshal(data, &registrationResponse)
+	if err := json.Unmarshal(data, &registrationResponse); err != nil {
+		return nil, fmt.Errorf("failed to unmarshal registration response for %s: %w", aircraft.Hex, err)
+	}
 
 	return &registrationResponse, nil
 
@@ -168,7 +174,7 @@ func unprocessedRegistrations(pg *postgres) []Aircraft {
 
 		if err != nil {
 			log.Error().Err(err).Msg("unprocessedRegistrations() - Error scanning rows")
-			return nil
+			continue
 		}
 
 		aircrafts = append(aircrafts, aircraft)

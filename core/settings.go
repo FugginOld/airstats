@@ -88,7 +88,11 @@ func (s *SettingsService) UpdateSetting(key string, value string) error {
 
 func (s *SettingsService) UpdateSettings(settings map[string]string) error {
 
-	tx, _ := s.pg.db.Begin(context.Background())
+	tx, err := s.pg.db.Begin(context.Background())
+	if err != nil {
+		log.Error().Err(err).Msg("Failed to begin transaction for UpdateSettings")
+		return fmt.Errorf("failed to begin transaction: %w", err)
+	}
 	defer tx.Rollback(context.Background())
 
 	query := `

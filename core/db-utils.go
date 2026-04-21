@@ -7,7 +7,39 @@ import (
 	"github.com/rs/zerolog/log"
 )
 
+var allowedProcessedColumns = map[string]bool{
+	"registration_processed":    true,
+	"route_processed":           true,
+	"interesting_processed":     true,
+	"lowest_aircraft_processed": true,
+	"highest_aircraft_processed": true,
+	"slowest_aircraft_processed": true,
+	"fastest_aircraft_processed": true,
+}
+
+var allowedTables = map[string]bool{
+	"lowest_aircraft":  true,
+	"highest_aircraft": true,
+	"slowest_aircraft": true,
+	"fastest_aircraft": true,
+}
+
+var allowedMetrics = map[string]bool{
+	"barometric_altitude": true,
+	"ground_speed":        true,
+}
+
+var allowedSortOrders = map[string]bool{
+	"ASC":  true,
+	"DESC": true,
+}
+
 func MarkProcessed(pg *postgres, colName string, aircrafts []Aircraft) {
+
+	if !allowedProcessedColumns[colName] {
+		log.Error().Msgf("MarkProcessed() - unknown column: %s", colName)
+		return
+	}
 
 	batch := &pgx.Batch{}
 
@@ -28,6 +60,19 @@ func MarkProcessed(pg *postgres, colName string, aircrafts []Aircraft) {
 }
 
 func DeleteExcessRows(pg *postgres, tableName string, metricName string, sortOrder string, maxRows int) {
+
+	if !allowedTables[tableName] {
+		log.Error().Msgf("DeleteExcessRows() - unknown table: %s", tableName)
+		return
+	}
+	if !allowedMetrics[metricName] {
+		log.Error().Msgf("DeleteExcessRows() - unknown metric: %s", metricName)
+		return
+	}
+	if !allowedSortOrders[sortOrder] {
+		log.Error().Msgf("DeleteExcessRows() - unknown sort order: %s", sortOrder)
+		return
+	}
 
 	queryCount := `SELECT COUNT(*) FROM ` + tableName
 

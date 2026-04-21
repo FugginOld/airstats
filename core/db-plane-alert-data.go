@@ -7,7 +7,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
-	"net/http"
 	"os"
 
 	"github.com/jackc/pgx/v5"
@@ -163,7 +162,7 @@ func UpsertPlaneAlertDb(pg *postgres) error {
 }
 
 func fetchCSVData(url string) ([][]string, error) {
-	resp, err := http.Get(url)
+	resp, err := httpClient.Get(url)
 	if err != nil {
 		return nil, fmt.Errorf("Error retrieving the CSV for plane-alert-db: %w", err)
 	}
@@ -234,7 +233,7 @@ func checkForUpdates(pg *postgres, isCustom bool) (needsUpdating bool, commitHas
 }
 
 func getLatestCommitHash() (string, error) {
-	resp, err := http.Get("https://api.github.com/repos/sdr-enthusiasts/plane-alert-db/contents/")
+	resp, err := httpClient.Get("https://api.github.com/repos/sdr-enthusiasts/plane-alert-db/contents/")
 	if err != nil {
 		return "", fmt.Errorf("Error retrieving latest commit hash for plane-alert-db: %w", err)
 	}

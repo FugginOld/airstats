@@ -4,7 +4,6 @@ import (
 	"context"
 	"database/sql"
 	"encoding/json"
-	"fmt"
 	"math"
 	"os"
 	"strconv"
@@ -27,9 +26,18 @@ func updateAircraftDatabase(pg *postgres) {
 	}
 
 	var response Response
-	json.Unmarshal(responseData, &response)
+	if err := json.Unmarshal(responseData, &response); err != nil {
+		log.Error().Err(err).Msg("updateAircraftDatabase() - Failed to unmarshal aircraft data")
+		return
+	}
 
 	response.TrimFlightStrings()
+
+	ruler := getRuler()
+	if ruler == nil {
+		log.Error().Msg("updateAircraftDatabase() - unable to create ruler, skipping update")
+		return
+	}
 
 	loc := []float64{getLon(), getLat()}
 
@@ -37,14 +45,12 @@ func updateAircraftDatabase(pg *postgres) {
 
 	for _, aircraft := range response.Aircraft {
 
-		// Filter out non-aircraft
 		if isNonAircraft(aircraft) {
 			continue
 		}
 
-		// Filter out aircraft not within radius
 		planeLoc := []float64{aircraft.Lon, aircraft.Lat}
-		distance := getRuler().Distance(loc, planeLoc)
+		distance := ruler.Distance(loc, planeLoc)
 
 		if distance < getRadius() {
 			aircraftsInRange = append(aircraftsInRange, aircraft)
@@ -64,7 +70,7 @@ func isNonAircraft(aircraft Aircraft) bool {
 func getRuler() *cheapruler.CheapRuler {
 	ruler, err := cheapruler.NewCheapruler(getLat(), "kilometers")
 	if err != nil {
-		fmt.Println("Error creating ruler: ", err)
+		log.Error().Err(err).Msg("getRuler() - Failed to create ruler")
 		return nil
 	}
 
@@ -72,8 +78,12 @@ func getRuler() *cheapruler.CheapRuler {
 }
 
 func getDistance(aircraft []float64) *float64 {
+	ruler := getRuler()
+	if ruler == nil {
+		return nil
+	}
 	loc := []float64{getLon(), getLat()}
-	distance := getRuler().Distance(loc, aircraft)
+	distance := ruler.Distance(loc, aircraft)
 	return &distance
 }
 
@@ -121,7 +131,7 @@ func getAircraftsRecentlySeen(pg *postgres, nowEpoch float64, aircrafts []Aircra
 
 	rows, err := pg.db.Query(context.Background(), query, hexValues, recentThreshold)
 	if err != nil {
-		fmt.Println("getAircraftsRecentlySeen() - Error querying db: ", err)
+		log.Error().Err(err).Msg("getAircraftsRecentlySeen() - Error querying db")
 		return nil
 	}
 	defer rows.Close()

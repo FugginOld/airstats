@@ -24,7 +24,7 @@ export const settings = {
                 return settingsObj;
             }
         } catch (error) {
-            console.error('Failed to load settings:', error);
+            // settings load failure is non-fatal; UI will use defaults
         }
     },
 
@@ -61,7 +61,6 @@ export const settings = {
             }
             return false;
         } catch (error) {
-            console.error('Failed to save settings:', error);
             return false;
         }
     },
