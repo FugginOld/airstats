@@ -43,6 +43,7 @@ func TestGetDistanceBetweenAirports(t *testing.T) {
 	if distance == nil {
 		t.Fatal("getDistanceBetweenAirports() returned nil")
 	}
+
 	if *distance <= 300 || *distance >= 400 {
 		t.Fatalf("getDistanceBetweenAirports() = %v, expected London-Paris range", *distance)
 	}

@@ -15,7 +15,7 @@ func TestIsNonAircraft(t *testing.T) {
 		{name: "tower registration", aircraft: Aircraft{R: "TWR"}, want: true},
 		{name: "category C prefix", aircraft: Aircraft{Category: "C3"}, want: true},
 		{name: "special squawk", aircraft: Aircraft{Squawk: "7777"}, want: true},
-		{name: "normal aircraft", aircraft: Aircraft{T: "A320", Category: "A1", Squawk: "1234"}, want: false},
+		{name: "normal aircraft", aircraft: Aircraft{T: "A320", R: "G-ABCD", Category: "A1", Squawk: "1234"}, want: false},
 	}
 
 	for _, tc := range tests {
@@ -63,7 +63,9 @@ func TestGetDistance(t *testing.T) {
 	t.Setenv("LAT", "51.5074")
 	t.Setenv("LON", "-0.1278")
 
-	distance := getDistance([]float64{-0.1278, 51.5074})
+	lon := -0.1278
+	lat := 51.5074
+	distance := getDistance([]float64{lon, lat})
 	if distance == nil {
 		t.Fatal("getDistance() returned nil")
 	}

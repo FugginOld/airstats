@@ -4,7 +4,6 @@ import (
 	"net/http"
 	"net/http/httptest"
 	"testing"
-	"time"
 )
 
 func TestFetch(t *testing.T) {
@@ -53,11 +52,7 @@ func TestFetchCSVData(t *testing.T) {
 }
 
 func TestFetchCSVDataRequestError(t *testing.T) {
-	originalClient := httpClient
-	httpClient = &http.Client{Timeout: 20 * time.Millisecond}
-	defer func() { httpClient = originalClient }()
-
-	if _, err := fetchCSVData("http://127.0.0.1:1"); err == nil {
+	if _, err := fetchCSVData("://bad-url"); err == nil {
 		t.Fatal("fetchCSVData() expected request error")
 	}
 }
