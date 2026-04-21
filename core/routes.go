@@ -11,7 +11,7 @@ import (
 
 	"github.com/jackc/pgx/v5"
 	"github.com/rs/zerolog/log"
-	"github.com/tomcarman/airstats/data"
+	"github.com/FugginOld/airstats/data"
 )
 
 func getDistanceBetweenAirports(origin []float64, destination []float64) *float64 {

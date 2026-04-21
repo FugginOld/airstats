@@ -73,7 +73,7 @@ Alternatively there are some [Advanced Setup](#advanced-setup) options.
 
 ## Support / Feeback
 
-Airstats is still under early active development. If you're having issues getting it running, or have suggestions/feedback, then the best place to get support is on the [#airstats](https://discord.gg/znkBr2eyev) channel in the [SDR Enthusiasts Discord](https://discord.gg/86Tyxjcd94). Alternatively you can raise an [Issue](https://github.com/tomcarman/airstats/issues) in GitHub, and I'll do my best to support.
+Airstats is still under early active development. If you're having issues getting it running, or have suggestions/feedback, then the best place to get support is on the [#airstats](https://discord.gg/znkBr2eyev) channel in the [SDR Enthusiasts Discord](https://discord.gg/86Tyxjcd94). Alternatively you can raise an [Issue](https://github.com/FugginOld/airstats/issues) in GitHub, and I'll do my best to support.
 </br>
 
 
@@ -86,7 +86,7 @@ The intention is for Airstats to be run via the [provided Docker containers](#se
 * BYO postgres database (in a Docker container or other)
 * Copy the contents of [`.env.example`](.env.example) into a new file called `.env`
 * Populate `.env` with all required values. See [Environment Variables](#environment-variables)
-* Download the latest [release binary](https://github.com/tomcarman/airstats/releases) for your OS/arch
+* Download the latest [release binary](https://github.com/FugginOld/airstats/releases) for your OS/arch
 * Execute e.g. `./airstats`
 * TODO: Instructions to run the webserver
 
