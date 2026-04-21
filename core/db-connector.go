@@ -10,7 +10,7 @@ import (
 )
 
 type postgres struct {
-	db *pgxpool.Pool
+	db DB
 }
 
 var (
