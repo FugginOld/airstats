@@ -11,7 +11,7 @@ import (
 
 	"github.com/jackc/pgx/v5"
 	"github.com/rs/zerolog/log"
-	"github.com/tomcarman/skystats/data"
+	"github.com/tomcarman/airstats/data"
 )
 
 func getDistanceBetweenAirports(origin []float64, destination []float64) *float64 {
@@ -158,7 +158,7 @@ func getRoutes(aircrafts []Aircraft) ([]RouteInfo, error) {
 	}
 
 	req.Header.Set("Content-Type", "application/json")
-	req.Header.Set("User-Agent", fmt.Sprintf("Skystats/%s", version))
+	req.Header.Set("User-Agent", fmt.Sprintf("Airstats/%s", version))
 	req.Header.Set("Accept", "application/json")
 
 	resp, err := httpClient.Do(req)

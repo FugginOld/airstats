@@ -18,10 +18,10 @@ func TestGetConnectionUrl(t *testing.T) {
 	t.Setenv("DB_PASSWORD", "pass")
 	t.Setenv("DB_HOST", "dbhost")
 	t.Setenv("DB_PORT", "5432")
-	t.Setenv("DB_NAME", "skystats_db")
+	t.Setenv("DB_NAME", "airstats_db")
 
 	got := GetConnectionUrl()
-	want := "postgres://user:pass@dbhost:5432/skystats_db"
+	want := "postgres://user:pass@dbhost:5432/airstats_db"
 	if got != want {
 		t.Fatalf("GetConnectionUrl() = %q, want %q", got, want)
 	}

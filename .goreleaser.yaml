@@ -5,9 +5,9 @@ before:
     - go mod tidy
 
 builds:
-  - id: skystats
+  - id: airstats
     main: ./core
-    binary: skystats
+    binary: airstats
     env:
       - CGO_ENABLED=0
     ldflags:
@@ -22,7 +22,7 @@ builds:
 
 archives:
   - id: default
-    ids: [skystats]
+    ids: [airstats]
     formats: [tar.gz]
     format_overrides:
       - goos: windows

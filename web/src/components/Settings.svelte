@@ -194,9 +194,9 @@
                     {:else if activeMenuItem === 'about'}
                         <div class="text-center mx-auto">
                             <div class="flex items-center justify-center gap-6 mb-2">
-                                <img src="/logo_icon.png" alt="Skystats Logo" class="w-32 h-32" />
+                                <img src="/logo_icon.png" alt="Airstats Logo" class="w-32 h-32" />
                                 <h1 class="text-7xl font-normal text-primary drop-shadow-[0_0_15px_rgba(59,130,246,0.5)]">
-                                    Skystats
+                                    Airstats
                                 </h1>
                             </div>
                             <div class="mb-6 text-base-content/50">
@@ -209,7 +209,7 @@
                             <p class="mt-6 mb-6 text-sm text-base-content/50">
                                 Created by <a href="https://github.com/tomcarman" target="_blank" rel="noopener noreferrer" class="text-accent hover:text-primary transition-colors">@tomcarman</a> with support from the SDR Enthusiasts community. Join us on <a href="https://discord.gg/znkBr2eyev" target="_blank" rel="noopener noreferrer" class="text-accent hover:text-primary transition-colors">Discord</a>.
                             </p>
-                            <a href="https://github.com/tomcarman/skystats" target="_blank" rel="noopener noreferrer" class="inline-flex items-center gap-2 opacity-50 hover:opacity-100 transition-opacity">
+                            <a href="https://github.com/tomcarman/airstats" target="_blank" rel="noopener noreferrer" class="inline-flex items-center gap-2 opacity-50 hover:opacity-100 transition-opacity">
                                 <IconBrandGithub stroke={2} size={32} />
                                 <span>GitHub</span>
                             </a>

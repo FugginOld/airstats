@@ -3,11 +3,13 @@
 </div>
 </br>
 <div align="center">
-    Skystats is an application to retrieve, store, and display interesting aircraft ADS-B data received via an SDR.
+    Airstats is an application to retrieve, store, and display interesting aircraft ADS-B data received via an SDR.
     </br></br>
-    ⚠️ Skystats is still in early development and considered "beta" so expect bugs and instability.
+    ⚠️ Airstats is still in early development and considered "beta" so expect bugs and instability.
 </div>
 </br>
+
+Airstats is a derivative of [tomcarman/skystats](https://github.com/tomcarman/skystats), originally created by [@tomcarman](https://github.com/tomcarman).
 
 
 ## Overview
@@ -39,7 +41,7 @@
 
 ### Running in Docker (recommended)
 
-Using Skystats in Docker is the easiest way to get up and running.
+Using Airstats in Docker is the easiest way to get up and running.
 
 * Copy the contents of [`.env.example`](.env.example) into a new file called `.env`
 * Populate `.env` with all required values. See [Environment Variables](#environment-variables)
@@ -55,11 +57,11 @@ Alternatively there are some [Advanced Setup](#advanced-setup) options.
 | Environment Variable | Description | Example |
 |---|---|---|
 | READSB_AIRCRAFT_JSON | URL of where readsb [aircraft.json](https://github.com/wiedehopf/readsb-githist/blob/dev/README-json.md) is being served e.g. http://yourhost:yourport/data/aircraft.json | `http://192.168.1.100:8080/data/aircraft.json` |
-| DB_HOST | Postgres host. If running in docker this should be the name of the postgres container. If running locally it should be the IP/hostname of wherever postgres is hosted. | Docker: `skystats-db` <br/> Local: `192.168.1.10` |
+| DB_HOST | Postgres host. If running in docker this should be the name of the postgres container. If running locally it should be the IP/hostname of wherever postgres is hosted. | Docker: `airstats-db` <br/> Local: `192.168.1.10` |
 | DB_PORT | Postgres port | `5432` |
 | DB_USER | Postgres username | `user` |
 | DB_PASSWORD | Postgres password | `1234` |
-| DB_NAME | Postgres database name | `skystats_db` |
+| DB_NAME | Postgres database name | `airstats_db` |
 | DOMESTIC_COUNTRY_ISO | ISO 2-letter country code of the country your receiver is in - used to generate the "Domestic Airport" stats. | `GB` |
 | LAT | Lattitude of your receiver. | `XX.XXXXXX` |
 | LON | Longitude of your receiver. | `YY.YYYYYY` |
@@ -71,21 +73,21 @@ Alternatively there are some [Advanced Setup](#advanced-setup) options.
 
 ## Support / Feeback
 
-Skystats is still under early active development. If you're having issues getting it running, or have suggestions/feedback, then the best place to get support is on the [#skystats](https://discord.gg/znkBr2eyev) channel in the [SDR Enthusiasts Discord](https://discord.gg/86Tyxjcd94). Alternatively you can raise an [Issue](https://github.com/tomcarman/skystats/issues) in GitHub, and I'll do my best to support.
+Airstats is still under early active development. If you're having issues getting it running, or have suggestions/feedback, then the best place to get support is on the [#airstats](https://discord.gg/znkBr2eyev) channel in the [SDR Enthusiasts Discord](https://discord.gg/86Tyxjcd94). Alternatively you can raise an [Issue](https://github.com/tomcarman/airstats/issues) in GitHub, and I'll do my best to support.
 </br>
 
 
 ## Advanced Setup
 
-The intention is for Skystats to be run via the [provided Docker containers](#setup). However, if you want to run locally or if you want to contribute by developing, see below guidance.
+The intention is for Airstats to be run via the [provided Docker containers](#setup). However, if you want to run locally or if you want to contribute by developing, see below guidance.
 
 ### Running locally
 
 * BYO postgres database (in a Docker container or other)
 * Copy the contents of [`.env.example`](.env.example) into a new file called `.env`
 * Populate `.env` with all required values. See [Environment Variables](#environment-variables)
-* Download the latest [release binary](https://github.com/tomcarman/skystats/releases) for your OS/arch
-* Execute e.g. `./skystats`
+* Download the latest [release binary](https://github.com/tomcarman/airstats/releases) for your OS/arch
+* Execute e.g. `./airstats`
 * TODO: Instructions to run the webserver
 
 
@@ -95,9 +97,9 @@ The intention is for Skystats to be run via the [provided Docker containers](#se
 * Copy the contents of `.env.example` into a new file called `.env`
 * Populate `.env` with all required values. See [Environment Variables](#environment-variables)
 * Change to the `core` folder e.g. `cd core`
-* Compile with `go build -o skystats-daemon`
-* Run the app `./skystats-daemon`
-    * It can be terminated via `kill $(cat skystats/core/skystats.pid)`
+* Compile with `go build -o airstats-daemon`
+* Run the app `./airstats-daemon`
+    * It can be terminated via `kill $(cat airstats/core/airstats.pid)`
 * Run the webserver
     * Change to the /web directory e.g. `cd ../web`
     * Start the webserver with `npm run dev -- --host`
@@ -116,7 +118,7 @@ Add the following to the `.env` file:
 PLANE_DB_URL=some/custom/location/plane-alert-db.csv
 ```
 
-And the following to `compose.yml` under the `skystats` service:
+And the following to `compose.yml` under the `airstats` service:
 ```
 - PLANE_DB_URL=${PLANE_DB_URL}
 ```
