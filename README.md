@@ -99,7 +99,7 @@ The intention is for Airstats to be run via the [provided Docker containers](#se
 * Change to the `core` folder e.g. `cd core`
 * Compile with `go build -o airstats-daemon`
 * Run the app `./airstats-daemon`
-    * It can be terminated via `kill $(cat airstats/core/airstats.pid)`
+    * It can be terminated via `kill $(cat airstats.pid)`
 * Run the webserver
     * Change to the /web directory e.g. `cd ../web`
     * Start the webserver with `npm run dev -- --host`
