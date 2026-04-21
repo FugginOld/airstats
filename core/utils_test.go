@@ -31,8 +31,17 @@ func TestGetHeaderMap(t *testing.T) {
 	headers := []string{"icao", "registration", "type"}
 	mapped := getHeaderMap(headers)
 
-	if mapped["icao"] != 0 || mapped["registration"] != 1 || mapped["type"] != 2 {
-		t.Fatalf("unexpected header map: %+v", mapped)
+	if len(mapped) != len(headers) {
+		t.Fatalf("getHeaderMap(%v) returned %d entries, want %d: %+v", headers, len(mapped), len(headers), mapped)
+	}
+	if idx, ok := mapped["icao"]; !ok || idx != 0 {
+		t.Fatalf("mapped[icao] = (%d, %v), want (0, true); full map: %+v", idx, ok, mapped)
+	}
+	if idx, ok := mapped["registration"]; !ok || idx != 1 {
+		t.Fatalf("mapped[registration] = (%d, %v), want (1, true); full map: %+v", idx, ok, mapped)
+	}
+	if idx, ok := mapped["type"]; !ok || idx != 2 {
+		t.Fatalf("mapped[type] = (%d, %v), want (2, true); full map: %+v", idx, ok, mapped)
 	}
 }
 

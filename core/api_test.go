@@ -18,7 +18,7 @@ func init() {
 }
 
 // newRouter creates a fresh gin router with all API routes registered against
-// the given server, following the same layout as APIServer.Start().
+// the given server, mirroring the route layout in APIServer.Start().
 func newRouter(s *APIServer) *gin.Engine {
 	r := gin.New()
 	r.Use(gin.Recovery())
@@ -26,8 +26,11 @@ func newRouter(s *APIServer) *gin.Engine {
 	api := r.Group("api")
 	stats := api.Group("/stats")
 	{
+		stats.GET("/above", s.getAboveStats)
+
 		stats.GET("/seen/flights", s.getFlightsSeenMetrics)
 		stats.GET("/seen/aircraft", s.getAircraftSeenMetrics)
+
 		stats.GET("/routes/metrics", s.getRouteMetrics)
 		stats.GET("/routes/airlines", s.getTopAirlines)
 		stats.GET("/routes/routes", s.getTopRoutes)
@@ -35,16 +38,35 @@ func newRouter(s *APIServer) *gin.Engine {
 		stats.GET("/routes/countries-origin", s.getTopOriginCountries)
 		stats.GET("/routes/airports-domestic", s.getTopDomesticAirports)
 		stats.GET("/routes/airports-international", s.getTopInternationalAirports)
+
 		stats.GET("/motion/fastest", s.getFastestAircraft)
 		stats.GET("/motion/slowest", s.getSlowestAircraft)
 		stats.GET("/motion/highest", s.getHighestAircraft)
 		stats.GET("/motion/lowest", s.getLowestAircraft)
+
 		stats.GET("/interesting/metrics", s.getInterestingMetrics)
 		stats.GET("/interesting/civilian", func(c *gin.Context) { s.getRecentInterestingAircraft(c, "Civ") })
+		stats.GET("/interesting/police", func(c *gin.Context) { s.getRecentInterestingAircraft(c, "Pol") })
+		stats.GET("/interesting/military", func(c *gin.Context) { s.getRecentInterestingAircraft(c, "Mil") })
+		stats.GET("/interesting/government", func(c *gin.Context) { s.getRecentInterestingAircraft(c, "Gov") })
+
 		stats.GET("/types/flights/all", func(c *gin.Context) { s.getTopAircraftTypes(c, "all", "flights") })
+		stats.GET("/types/flights/year", func(c *gin.Context) { s.getTopAircraftTypes(c, "year", "flights") })
+		stats.GET("/types/flights/month", func(c *gin.Context) { s.getTopAircraftTypes(c, "month", "flights") })
+		stats.GET("/types/flights/day", func(c *gin.Context) { s.getTopAircraftTypes(c, "day", "flights") })
+
 		stats.GET("/types/aircraft/all", func(c *gin.Context) { s.getTopAircraftTypes(c, "all", "aircraft") })
-		stats.GET("/types/flights/bad", func(c *gin.Context) { s.getTopAircraftTypes(c, "all", "invalid") })
-		stats.GET("/above", s.getAboveStats)
+		stats.GET("/types/aircraft/year", func(c *gin.Context) { s.getTopAircraftTypes(c, "year", "aircraft") })
+		stats.GET("/types/aircraft/month", func(c *gin.Context) { s.getTopAircraftTypes(c, "month", "aircraft") })
+		stats.GET("/types/aircraft/day", func(c *gin.Context) { s.getTopAircraftTypes(c, "day", "aircraft") })
+
+		stats.GET("/charts/flights/year", func(c *gin.Context) { s.getChartFlightsOverTime(c, "year") })
+		stats.GET("/charts/flights/month", func(c *gin.Context) { s.getChartFlightsOverTime(c, "month") })
+		stats.GET("/charts/flights/day", func(c *gin.Context) { s.getChartFlightsOverTime(c, "day") })
+
+		stats.GET("/charts/aircraft/year", func(c *gin.Context) { s.getChartAircraftOverTime(c, "year") })
+		stats.GET("/charts/aircraft/month", func(c *gin.Context) { s.getChartAircraftOverTime(c, "month") })
+		stats.GET("/charts/aircraft/day", func(c *gin.Context) { s.getChartAircraftOverTime(c, "day") })
 	}
 	settings := api.Group("/settings")
 	{
@@ -66,7 +88,10 @@ func doGET(t *testing.T, r *gin.Engine, path string) *httptest.ResponseRecorder 
 
 func doPUT(t *testing.T, r *gin.Engine, path string, body any) *httptest.ResponseRecorder {
 	t.Helper()
-	b, _ := json.Marshal(body)
+	b, err := json.Marshal(body)
+	if err != nil {
+		t.Fatalf("doPUT: json.Marshal: %v", err)
+	}
 	w := httptest.NewRecorder()
 	req := httptest.NewRequest(http.MethodPut, path, bytes.NewReader(b))
 	req.Header.Set("Content-Type", "application/json")
@@ -104,28 +129,23 @@ func TestGetTimezone(t *testing.T) {
 	s := newTestServer(&mockDB{})
 
 	tests := []struct {
-		query string
-		want  string
+		rawURL string
+		want   string
 	}{
-		{"", "UTC"},
-		{"?tz=America%2FNew_York", "America/New_York"},
-		{"?tz=Invalid%2FZone", "UTC"},
+		{"/", "UTC"},
+		{"/?tz=America%2FNew_York", "America/New_York"},
+		{"/?tz=Invalid%2FZone", "UTC"},
 	}
 
 	for _, tc := range tests {
-		r := newRouter(s)
-		// We use getFlightsSeenMetrics as a carrier; we just want the TZ to be
-		// applied without error.  The mock returns 0 for all three counters.
-		db := &mockDB{
-			queryRowQueue: []pgx.Row{intRow(0), intRow(0), intRow(0)},
+		req := httptest.NewRequest(http.MethodGet, tc.rawURL, nil)
+		w := httptest.NewRecorder()
+		c, _ := gin.CreateTestContext(w)
+		c.Request = req
+		got := s.getTimezone(c)
+		if got != tc.want {
+			t.Errorf("URL=%q getTimezone() = %q, want %q", tc.rawURL, got, tc.want)
 		}
-		s2 := newTestServer(db)
-		r2 := newRouter(s2)
-		w := doGET(t, r2, "/api/stats/seen/flights"+tc.query)
-		if w.Code != http.StatusOK {
-			t.Errorf("query=%q status=%d, want 200", tc.query, w.Code)
-		}
-		_ = r
 	}
 }
 
@@ -622,8 +642,10 @@ func TestGetTopAircraftTypes_Aircraft(t *testing.T) {
 }
 
 func TestGetTopAircraftTypes_InvalidParam(t *testing.T) {
-	r := newRouter(newTestServer(&mockDB{}))
-	w := doGET(t, r, "/api/stats/types/flights/bad")
+	s := newTestServer(&mockDB{})
+	r := gin.New()
+	r.GET("/test", func(c *gin.Context) { s.getTopAircraftTypes(c, "all", "invalid") })
+	w := doGET(t, r, "/test")
 	if w.Code != http.StatusBadRequest {
 		t.Fatalf("status = %d, want 400", w.Code)
 	}
