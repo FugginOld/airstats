@@ -34,15 +34,46 @@ Airstats is a derivative of [tomcarman/skystats](https://github.com/tomcarman/sk
 
 ## Setup
 
-### Running in Docker (recommended)
+### Docker Compose (recommended)
 
-Using Airstats in Docker is the easiest way to get up and running.
+This is the easiest way to run Airstats and PostgreSQL together.
 
-* Copy the contents of [`.env.example`](.env.example) into a new file called `.env`
-* Populate `.env` with all required values. See [Environment Variables](#environment-variables)
-* Download [`example.compose.yml`](example.compose.yml) and name it compose.yml
-* Run `docker compose up -d`
-* The interface should be available on `localhost:5173` where localhost is the IP of the docker host
+1. Install Docker Engine and Docker Compose.
+2. Clone this repository:
+   * `git clone https://github.com/FugginOld/airstats.git`
+   * `cd airstats`
+3. Create your env file:
+   * `cp .env.example .env`
+4. Update `.env` with your values (at minimum: `READSB_AIRCRAFT_JSON`, `LAT`, `LON`, `DOMESTIC_COUNTRY_ISO`; DB values can stay as defaults for compose).
+5. Start the stack:
+   * `docker compose -f example.compose.yml up -d`
+6. Open the UI at `http://localhost:5173` (replace `localhost` with your Docker host IP if remote).
+
+To stop it:
+
+* `docker compose -f example.compose.yml down`
+
+### Docker (without Compose)
+
+If you prefer raw Docker commands, run PostgreSQL first, then run Airstats on the same Docker network.
+
+1. Create a network:
+   * `docker network create airstats-net`
+2. Start PostgreSQL:
+   * `docker run -d --name airstats-db --network airstats-net -e POSTGRES_USER=user -e POSTGRES_PASSWORD=1234 -e POSTGRES_DB=airstats_db -v airstats_postgres_data:/var/lib/postgresql/data postgres:17`
+3. Start Airstats:
+   * `docker run -d --name airstats --network airstats-net -p 5173:80 -e READSB_AIRCRAFT_JSON=http://yourhost:yourport/data/aircraft.json -e DB_HOST=airstats-db -e DB_PORT=5432 -e DB_USER=user -e DB_PASSWORD=1234 -e DB_NAME=airstats_db -e DOMESTIC_COUNTRY_ISO=US -e LAT=0.000000 -e LON=0.000000 -e RADIUS=500 -e ABOVE_RADIUS=20 -e LOG_LEVEL=INFO ghcr.io/fugginold/airstats:latest`
+4. Open `http://localhost:5173`.
+
+### PostgreSQL setup shell script (local/non-compose setups)
+
+If you are **not** using the compose PostgreSQL container, use the interactive PostgreSQL setup script:
+
+* `./scripts/setup-postgres.sh`
+
+This script can install PostgreSQL 17 (supported OS families), create/update a role and database, and write `DB_*` values to `.env`.
+
+Full script documentation: [`docs/setup/postgres-setup-script.md`](docs/setup/postgres-setup-script.md)
 
 Alternatively there are some [Advanced Setup](#advanced-setup) options.
 
