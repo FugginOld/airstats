@@ -1,7 +1,7 @@
 # Build the app
 FROM golang:1.25.3-alpine AS builder
 WORKDIR /app
-COPY go.mod go.sum /app
+COPY go.mod go.sum /app/
 COPY core /app/core
 COPY data /app/data
 COPY docs /app/docs
@@ -23,7 +23,7 @@ RUN \
     npm install && \
     npm run build
 
-FROM ghcr.io/fugginold/dockerimage:base
+FROM ghcr.io/sdr-enthusiasts/docker-baseimage:base
 LABEL org.opencontainers.image.source="https://github.com/FugginOld/airstats"
 #SHELL ["/bin/bash", "-o", "pipefail", "-c", "-x"]
 

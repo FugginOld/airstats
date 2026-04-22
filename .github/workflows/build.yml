@@ -33,7 +33,7 @@ jobs:
       id: docker_meta
       uses: docker/metadata-action@v4
       with:
-        images: ghcr.io/${{ github.repository }}
+        images: ghcr.io/fugginold/airstats
         tags: |
           type=schedule
           type=ref,event=branch
