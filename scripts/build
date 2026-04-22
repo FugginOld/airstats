@@ -9,10 +9,10 @@ YELLOW='\033[1;33m'
 NC='\033[0m' # No Color
 
 # Configuration
-BUILD_DIR="$HOME/dev/skystats/build"
-PID_FILE="${BUILD_DIR}/skystats.pid"
-LOG_FILE="${BUILD_DIR}/skystats.log"
-BINARY_NAME="skystats-daemon"
+BUILD_DIR="$HOME/dev/airstats/build"
+PID_FILE="${BUILD_DIR}/airstats.pid"
+LOG_FILE="${BUILD_DIR}/airstats.log"
+BINARY_NAME="airstats-daemon"
 
 echo -e "${GREEN}Starting development build process...${NC}"
 
@@ -62,7 +62,7 @@ echo "  Date:    ${DATE}"
 
 # Build the daemon with ldflags
 echo -e "${GREEN}Building ${BINARY_NAME}...${NC}"
-cd $HOME/dev/skystats && go build -ldflags "-s -w -X main.version=${VERSION} -X main.commit=${COMMIT} -X main.date=${DATE}" -o "${BUILD_DIR}/${BINARY_NAME}" ./core 
+cd $HOME/dev/airstats && go build -ldflags "-s -w -X main.version=${VERSION} -X main.commit=${COMMIT} -X main.date=${DATE}" -o "${BUILD_DIR}/${BINARY_NAME}" ./core 
 
 if [ $? -ne 0 ]; then
     echo -e "${RED}Build failed!${NC}"

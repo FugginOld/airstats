@@ -15,7 +15,7 @@ var (
 )
 
 func showVersionExit() {
-	fmt.Printf("skystats %s (commit %s) build %s\n", version, commit, date)
+	fmt.Printf("airstats %s (commit %s) build %s\n", version, commit, date)
 	os.Exit(0)
 }
 

@@ -1,3 +1,0 @@
-#!/command/with-contenv sh
-cd /app/core
-exec s6wrap --prepend=skystats --timestamps --args /app/core/skystats

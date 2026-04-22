@@ -1,0 +1,3 @@
+#!/command/with-contenv sh
+cd /app/core
+exec s6wrap --prepend=airstats --timestamps --args /app/core/airstats

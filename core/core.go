@@ -44,9 +44,9 @@ func main() {
 		execDir := filepath.Dir(execPath)
 
 		cntxt := &daemon.Context{
-			PidFileName: filepath.Join(execDir, "skystats.pid"),
+			PidFileName: filepath.Join(execDir, "airstats.pid"),
 			PidFilePerm: 0644,
-			LogFileName: filepath.Join(execDir, "skystats.log"),
+			LogFileName: filepath.Join(execDir, "airstats.log"),
 			LogFilePerm: 0640,
 			WorkDir:     execDir,
 			Umask:       027,
@@ -67,7 +67,7 @@ func main() {
 		log.Logger = log.Output(consoleWriter)
 		setLogLevel()
 
-		log.Info().Msg("Skystats: Running in daemon mode")
+		log.Info().Msg("Airstats: Running in daemon mode")
 	}
 
 	url := GetConnectionUrl()
@@ -108,11 +108,11 @@ func main() {
 	updateRoutesTicker := time.NewTicker(300 * time.Second)
 	updateInterestingSeenTicker := time.NewTicker(120 * time.Second)
 
-	// Welcome to skystats
-	if banner, err := os.ReadFile("../docs/logo/skystats_ascii.txt"); err == nil {
+	// Welcome to airstats
+	if banner, err := os.ReadFile("../docs/logo/airstats_ascii.txt"); err == nil {
 		log.Info().Msg("\n" + string(banner))
 	}
-	log.Info().Msg("Welcome to Skystats!")
+	log.Info().Msg("Welcome to Airstats!")
 
 	defer func() {
 		log.Info().Msg("Closing database connection")

@@ -1,7 +1,7 @@
 .env
-skystats-daemon
-skystats.log
-skystats.pid
+airstats-daemon
+airstats.log
+airstats.pid
 .DS_Store
 .vscode
 .vite

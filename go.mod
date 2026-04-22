@@ -1,4 +1,4 @@
-module github.com/tomcarman/skystats
+module github.com/FugginOld/airstats
 
 go 1.25.3
 

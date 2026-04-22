@@ -36,6 +36,6 @@
     {:else if data.version === "dev"}
         <div class="text-sm">{data.version} • {data.commit} • {data.date.toLocaleString()}</div>
     {:else}
-        <div class="text-sm">Skystats • {data.version}</div>
+        <div class="text-sm">Airstats • {data.version}</div>
     {/if}
 </footer>

@@ -1,13 +1,13 @@
 services:
-  skystats:
-    image: ghcr.io/tomcarman/skystats:latest
+  airstats:
+    image: ghcr.io/tomcarman/airstats:latest
     depends_on:
-      skystats-db:
+      airstats-db:
         condition: service_healthy
     ports:
       - "5173:80"
-    container_name: skystats
-    hostname: skystats
+    container_name: airstats
+    hostname: airstats
     environment:
       # ADSB
       - READSB_AIRCRAFT_JSON=${READSB_AIRCRAFT_JSON}
@@ -25,9 +25,9 @@ services:
       - DOMESTIC_COUNTRY_ISO=${DOMESTIC_COUNTRY_ISO}
       - LOG_LEVEL=${LOG_LEVEL}
 
-  skystats-db:
+  airstats-db:
     image: postgres:17
-    container_name: skystats-db
+    container_name: airstats-db
     environment:
       - POSTGRES_USER=${DB_USER}
       - POSTGRES_PASSWORD=${DB_PASSWORD}

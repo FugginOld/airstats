@@ -80,7 +80,7 @@ func initMigrator(db *sql.DB) (*migrate.Migrate, error) {
 	return migrator, nil
 }
 
-// Only for users who were using a version of Skystats prior to the db
+// Only for users who were using a version of Airstats prior to the db
 // creation being scripted. Checks for when the schema_migrations table does not exist,
 // but the aircraft_data does. If so, forces the db version to 1.
 func checkForExistingDatabase(db *sql.DB) (bool, error) {

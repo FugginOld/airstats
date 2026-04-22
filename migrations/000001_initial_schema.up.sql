@@ -1,4 +1,4 @@
--- Initial schema for Skystats database
+-- Initial schema for Airstats database
 
 -- Create aircraft_data table
 CREATE TABLE aircraft_data (

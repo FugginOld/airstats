@@ -40,7 +40,7 @@
   </div>
   <div class="navbar-center">
     <h1 class="text-4xl font-normal text-primary drop-shadow-[0_0_15px_rgba(59,130,246,0.5)]">
-      Skystats
+      Airstats
     </h1>
   </div>
   <div class="navbar-end">
