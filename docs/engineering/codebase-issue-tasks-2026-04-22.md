@@ -6,10 +6,10 @@
 Fix misspelling in plane-alert upsert success log message.
 
 ### Evidence
-`core/db-plane-alert-data.go` logs `"succesfully upserted ..."` (missing the second `s` in "successfully").
+`core/db-plane-alert-data.go` logs `"Succesfully upserted ..."` (missing the second `s` in "Successfully").
 
 ### Proposed change
-- Update the log string to: `"successfully upserted %d interesting aircraft records from plane-alert-db"`.
+- Update the log string to: `"Successfully upserted %d interesting aircraft records from plane-alert-db"`.
 
 ### Acceptance criteria
 - Log output uses correct spelling (`successfully`).
@@ -20,10 +20,10 @@ Fix misspelling in plane-alert upsert success log message.
 ## 2) Bug fix task
 
 ### Title
-Correct `total` metrics response key typo for unique countries.
+Correct unique countries metrics response key typo in route metrics.
 
 ### Evidence
-In `core/api.go`, `getTotalMetrics` writes:
+In `core/api.go`, `getRouteMetrics` (served at `GET /api/stats/routes/metrics`) writes:
 - `stats["unqiue_countries"] = uniqueCountries`
 
 The key is misspelled (`unqiue`), which can break frontend/API consumers expecting `unique_countries`.
@@ -33,7 +33,7 @@ The key is misspelled (`unqiue`), which can break frontend/API consumers expecti
 - Add backward-compatible alias support temporarily if needed (`unqiue_countries` + `unique_countries`) and deprecate the typo key.
 
 ### Acceptance criteria
-- `GET /api/stats/total` includes `unique_countries`.
+- `GET /api/stats/routes/metrics` includes `unique_countries`.
 - Existing frontend components use the corrected key.
 - Tests cover the corrected key and (if kept) typo-key deprecation path.
 
