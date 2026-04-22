@@ -12,8 +12,8 @@ ARG DATE=unknown
 RUN DATE="${DATE:-$(date -u +'%Y-%m-%dT%H:%M:%SZ')}" && \
     go build -ldflags "-s -w -X main.version=${VERSION:-dev} -X main.commit=${COMMIT:-none} -X main.date=${DATE}" -o airstats ./core
 
-
-FROM node:20-alpine AS node
+# Use cross-platform Node.js base image for Buildx
+FROM --platform=$BUILDPLATFORM node:20-alpine AS node
 
 COPY ./web /app
 
