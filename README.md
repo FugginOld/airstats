@@ -1,6 +1,6 @@
-<div align="center">
-    <img src="docs/logo/logo.jpg" width="500px" align="center" alt="sf metadata linter logo" />
-</div>
+#<div align="center">
+#    <img src="docs/logo/logo.jpg" width="500px" align="center" alt="sf metadata linter logo" />
+#</div>
 </br>
 <div align="center">
     Airstats is an application to retrieve, store, and display interesting aircraft ADS-B data received via an SDR.
