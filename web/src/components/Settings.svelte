@@ -194,7 +194,7 @@
                     {:else if activeMenuItem === 'about'}
                         <div class="text-center mx-auto">
                             <div class="flex items-center justify-center gap-6 mb-2">
-                                <img src="/logo_icon.png" alt="Airstats Logo" class="w-32 h-32" />
+                                <img src="/logo.png" alt="Airstats Logo" class="w-32 h-32" />
                                 <h1 class="text-7xl font-normal text-primary drop-shadow-[0_0_15px_rgba(59,130,246,0.5)]">
                                     Airstats
                                 </h1>
