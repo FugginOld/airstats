@@ -1,6 +1,6 @@
 services:
   airstats:
-    image: ghcr.io/tomcarman/airstats:latest
+    image: ghcr.io/fugginold/airstats:latest
     depends_on:
       airstats-db:
         condition: service_healthy

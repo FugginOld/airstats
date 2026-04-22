@@ -23,8 +23,8 @@ RUN \
     npm install && \
     npm run build
 
+FROM ghcr.io/fugginold/dockerimage:base
 LABEL org.opencontainers.image.source="https://github.com/FugginOld/airstats"
-FROM ghcr.io/sdr-enthusiasts/docker-baseimage:base
 #SHELL ["/bin/bash", "-o", "pipefail", "-c", "-x"]
 
 ENV \

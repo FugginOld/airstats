@@ -1,12 +1,10 @@
-<div align="center">
-    Airstats is an application to retrieve, store, and display interesting aircraft ADS-B data received via an SDR.
-    </br></br>
-    ⚠️ Airstats is still in early development and considered "beta" so expect bugs and instability.
-</div>
-</br>
+# Airstats
+
+Airstats is an application to retrieve, store, and display interesting aircraft ADS-B data received via an SDR.
+
+⚠️ Airstats is still in early development and considered "beta" so expect bugs and instability.
 
 Airstats is a derivative of [tomcarman/skystats](https://github.com/tomcarman/skystats), originally created by [@tomcarman](https://github.com/tomcarman).
-
 
 ## Overview
 
@@ -18,6 +16,7 @@ Airstats is a derivative of [tomcarman/skystats](https://github.com/tomcarman/sk
 * "Interesting" aircraft are identified via a local copy of the [plane-alert-db](https://github.com/sdr-enthusiasts/plane-alert-db)
 
 ## Features
+
 * "Above Me" - live view of 5 nearest aircraft with routing information
 * Total aircraft seen (past hour, day, all time)
 * Total aircraft with route data
@@ -27,7 +26,7 @@ Airstats is a derivative of [tomcarman/skystats](https://github.com/tomcarman/sk
 * Top Airports (Domestic, International)
 * Top Countries (Origin, Destination)
 * Top Routes
-* Interesting Aircraft (Miiltary, Government, Police, Civilian)
+* Interesting Aircraft (Military, Government, Police, Civilian)
 * Fastest Aircraft
 * Slowest Aircraft
 * Highest Aircraft
@@ -46,32 +45,27 @@ Using Airstats in Docker is the easiest way to get up and running.
 * The interface should be available on `localhost:5173` where localhost is the IP of the docker host
 
 Alternatively there are some [Advanced Setup](#advanced-setup) options.
-</br>
 
 ### Environment Variables
 
 | Environment Variable | Description | Example |
-|---|---|---|
-| READSB_AIRCRAFT_JSON | URL of where readsb [aircraft.json](https://github.com/wiedehopf/readsb-githist/blob/dev/README-json.md) is being served e.g. http://yourhost:yourport/data/aircraft.json | `http://192.168.1.100:8080/data/aircraft.json` |
-| DB_HOST | Postgres host. If running in docker this should be the name of the postgres container. If running locally it should be the IP/hostname of wherever postgres is hosted. | Docker: `airstats-db` <br/> Local: `192.168.1.10` |
+| --- | --- | --- |
+| READSB_AIRCRAFT_JSON | URL of where readsb [aircraft.json](https://github.com/wiedehopf/readsb-githist/blob/dev/README-json.md) is being served e.g. `http://yourhost:yourport/data/aircraft.json` | `http://192.168.1.100:8080/data/aircraft.json` |
+| DB_HOST | Postgres host. If running in Docker use the postgres container name. If running locally use the IP/hostname of your postgres server. Docker: `airstats-db` / Local: `192.168.1.10` | `airstats-db` |
 | DB_PORT | Postgres port | `5432` |
 | DB_USER | Postgres username | `user` |
 | DB_PASSWORD | Postgres password | `1234` |
 | DB_NAME | Postgres database name | `airstats_db` |
 | DOMESTIC_COUNTRY_ISO | ISO 2-letter country code of the country your receiver is in - used to generate the "Domestic Airport" stats. | `GB` |
-| LAT | Lattitude of your receiver. | `XX.XXXXXX` |
+| LAT | Latitude of your receiver. | `XX.XXXXXX` |
 | LON | Longitude of your receiver. | `YY.YYYYYY` |
 | RADIUS | Distance in km from your receiver that you want to record aircraft. Set to a distance greater than that of your receiver to capture all aircraft. | `1000` |
-| ABOVE_RADIUS | Radius for the "Above Timeline" <br/> **Note: currently only 20km supported.** | `20` |
-| LOG_LEVEL | Logging level e.g. `TRACE`, `DEBUG`, `INFO`, `WARN`, `ERROR`. <br/><br/> The default/recommended level is `INFO`, but `DEBUG` can be used if needed. <br/><br/> Note: `DEBUG` will also cause the Gin API server to run in "debug" mode with more verbose logging. |`INFO`|
+| ABOVE_RADIUS | Radius for the "Above Timeline". Note: currently only 20km is supported. | `20` |
+| LOG_LEVEL | Logging level: `TRACE`, `DEBUG`, `INFO`, `WARN`, or `ERROR`. Default is `INFO`. `DEBUG` also enables verbose Gin API logging. | `INFO` |
 
-<br/>
-
-## Support / Feeback
+## Support / Feedback
 
 Airstats is still under early active development. If you're having issues getting it running, or have suggestions/feedback, then the best place to get support is on the [#airstats](https://discord.gg/znkBr2eyev) channel in the [SDR Enthusiasts Discord](https://discord.gg/86Tyxjcd94). Alternatively you can raise an [Issue](https://github.com/FugginOld/airstats/issues) in GitHub, and I'll do my best to support.
-</br>
-
 
 ## Advanced Setup
 
@@ -86,8 +80,8 @@ The intention is for Airstats to be run via the [provided Docker containers](#se
 * Execute e.g. `./airstats`
 * TODO: Instructions to run the webserver
 
-
 ### Compile from source (e.g. to develop)
+
 * BYO postgres database (in a Docker container or other)
 * Clone this repository
 * Copy the contents of `.env.example` into a new file called `.env`
@@ -95,10 +89,10 @@ The intention is for Airstats to be run via the [provided Docker containers](#se
 * Change to the `core` folder e.g. `cd core`
 * Compile with `go build -o airstats-daemon`
 * Run the app `./airstats-daemon`
-    * It can be terminated via `kill $(cat airstats.pid)`
+  * It can be terminated via `kill $(cat airstats.pid)`
 * Run the webserver
-    * Change to the /web directory e.g. `cd ../web`
-    * Start the webserver with `npm run dev -- --host`
+  * Change to the /web directory e.g. `cd ../web`
+  * Start the webserver with `npm run dev -- --host`
 * See [`build`](/scripts/build) for a script to automate some of this
 
 ## Advanced Use Cases
@@ -107,39 +101,40 @@ The intention is for Airstats to be run via the [provided Docker containers](#se
 
 If you live in an area where you frequently see planes that you are not interested in, you can provide a custom version of [plane-alert-db](https://github.com/sdr-enthusiasts/plane-alert-db).
 
-This expects a file identical in structure to https://github.com/sdr-enthusiasts/plane-alert-db/blob/main/plane-alert-db-images.csv
+This expects a file identical in structure to <https://github.com/sdr-enthusiasts/plane-alert-db/blob/main/plane-alert-db-images.csv>
 
 Add the following to the `.env` file:
-```
+
+```env
 PLANE_DB_URL=some/custom/location/plane-alert-db.csv
 ```
 
 And the following to `compose.yml` under the `airstats` service:
-```
+
+```yaml
 - PLANE_DB_URL=${PLANE_DB_URL}
 ```
 
-**⚠️ The format of the csv must match the format of combined plane data + image file from plane-alert-db**
-
-<br/>
+⚠️ The format of the csv must match the format of combined plane data + image file from plane-alert-db.
 
 ## Screenshots
 
 ### Home
+
 ![Home](docs/screenshots/1_Home.png)
-</br>
+
 ![AboveMeModal](docs/screenshots/2_AboveMeModal.png)
-</br>
 
 ### Route Stats
+
 ![RouteStats](docs/screenshots/3_RouteStats.png)
-</br>
 
 ### Interesting Aircraft
+
 ![InterestingSeen](docs/screenshots/4_InterestingStats.png)
-</br>
+
 ![InterestingModal](docs/screenshots/5_InterestingModal.png)
-</br>
 
 ### Motion Stats
+
 ![MotionStats](docs/screenshots/6_MotionStats.png)
