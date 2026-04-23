@@ -7,7 +7,7 @@ require github.com/JamesLMilner/cheap-ruler-go v0.0.0-20191212211616-0919b75413a
 require (
 	github.com/gin-gonic/gin v1.10.1
 	github.com/golang-migrate/migrate/v4 v4.19.0
-	github.com/jackc/pgx/v5 v5.9.0
+	github.com/jackc/pgx/v5 v5.9.2
 	github.com/lib/pq v1.10.9
 	github.com/rs/zerolog v1.34.0
 	github.com/sevlyar/go-daemon v0.1.6
