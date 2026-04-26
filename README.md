@@ -150,22 +150,4 @@ And the following to `compose.yml` under the `airstats` service:
 
 ## Screenshots
 
-### Home
-
-![Home](docs/screenshots/1_Home.png)
-
-![AboveMeModal](docs/screenshots/2_AboveMeModal.png)
-
-### Route Stats
-
-![RouteStats](docs/screenshots/3_RouteStats.png)
-
-### Interesting Aircraft
-
-![InterestingSeen](docs/screenshots/4_InterestingStats.png)
-
-![InterestingModal](docs/screenshots/5_InterestingModal.png)
-
-### Motion Stats
-
-![MotionStats](docs/screenshots/6_MotionStats.png)
+### Coming Soon
