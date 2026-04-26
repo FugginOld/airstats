@@ -13,7 +13,7 @@ Airstats is a derivative of [tomcarman/skystats](https://github.com/tomcarman/sk
 * The application consumes aircraft data from the readsb [aircraft.json](https://github.com/wiedehopf/readsb-githist/blob/dev/README-json.md) file
 * A [gin](https://gin-gonic.com/) API surfaces information from the postgres database to the web frontend
 * Registration & routing data is retrieved from the [adsb-db](https://github.com/mrjackwills/adsbdb) API
-* "Interesting" aircraft are identified via a local copy of the [plane-alert-db](https://github.com/sdr-enthusiasts/plane-alert-db)
+* "Interesting" aircraft are identified via a local copy of the [aircraft-taxonomy-db](https://github.com/FugginOld/aircraft-taxonomy-db)
 
 ## Features
 
@@ -128,16 +128,16 @@ The intention is for Airstats to be run via the [provided Docker containers](#se
 
 ## Advanced Use Cases
 
-### Custom plane-alert-db csv
+### Custom aircraft-taxonomy-db csv
 
-If you live in an area where you frequently see planes that you are not interested in, you can provide a custom version of [plane-alert-db](https://github.com/sdr-enthusiasts/plane-alert-db).
+If you live in an area where you frequently see planes that you are not interested in, you can provide a custom version of [aircraft-taxonomy-db](https://github.com/FugginOld/aircraft-taxonomy-db).
 
-This expects a file identical in structure to <https://github.com/sdr-enthusiasts/plane-alert-db/blob/main/plane-alert-db-images.csv>
+This expects a file identical in structure to <https://github.com/FugginOld/aircraft-taxonomy-db/blob/main/data/aircraft-taxonomy-db.csv>
 
 Add the following to the `.env` file:
 
 ```env
-PLANE_DB_URL=some/custom/location/plane-alert-db.csv
+PLANE_DB_URL=some/custom/location/aircraft-taxonomy-db.csv
 ```
 
 And the following to `compose.yml` under the `airstats` service:
@@ -146,7 +146,7 @@ And the following to `compose.yml` under the `airstats` service:
 - PLANE_DB_URL=${PLANE_DB_URL}
 ```
 
-⚠️ The format of the csv must match the format of combined plane data + image file from plane-alert-db.
+⚠️ The format of the csv must match the 10-column format of aircraft-taxonomy-db (`$ICAO`, `$Registration`, `$Operator`, `$Type`, `$ICAO Type`, `#CMPG`, `$Tag 1`, `$#Tag 2`, `$#Tag 3`, `Category`).
 
 ## Screenshots
 

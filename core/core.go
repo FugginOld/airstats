@@ -87,7 +87,7 @@ func main() {
 		os.Exit(1)
 	}
 
-	log.Info().Msg("Checking if interesting aircraft reference data needs updating from plane-alert-db")
+	log.Info().Msg("Checking if interesting aircraft reference data needs updating from aircraft-taxonomy-db")
 	if err := UpsertPlaneAlertDb(pg); err != nil {
 		log.Error().Msgf("Error updating interesting aircraft data: %v", err)
 		os.Exit(1)

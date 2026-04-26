@@ -39,12 +39,7 @@ func updateInterestingSeen(pg *postgres) {
 			tag1,
 			tag2,
 			tag3,
-			category,
-			link,
-			image_link_1,
-			image_link_2,
-			image_link_3,
-			image_link_4
+			category
 		FROM interesting_aircraft
 		WHERE icao = ANY($1::text[])`
 
@@ -72,11 +67,6 @@ func updateInterestingSeen(pg *postgres) {
 			&interestingAircraft.Tag2,
 			&interestingAircraft.Tag3,
 			&interestingAircraft.Category,
-			&interestingAircraft.Link,
-			&interestingAircraft.ImageLink1,
-			&interestingAircraft.ImageLink2,
-			&interestingAircraft.ImageLink3,
-			&interestingAircraft.ImageLink4,
 		)
 
 		if err != nil {
@@ -127,11 +117,6 @@ func updateInterestingSeen(pg *postgres) {
 				tag2,
 				tag3,
 				category,
-				link,
-				image_link_1,
-				image_link_2,
-				image_link_3,
-				image_link_4,
 				hex,
 				flight,
 				r,
@@ -152,7 +137,7 @@ func updateInterestingSeen(pg *postgres) {
 			VALUES (
 				$1, $2, $3, $4, $5, $6, $7, $8, $9, $10,
 				$11, $12, $13, $14, $15, $16, $17, $18, $19, $20,
-				$21, $22, $23, $24, $25, $26, $27, $28, $29, $30, $31, $32)`
+				$21, $22, $23, $24, $25, $26, $27)`
 
 		batch.Queue(insertStatement,
 			aircraft.Icao,
@@ -165,11 +150,6 @@ func updateInterestingSeen(pg *postgres) {
 			aircraft.Tag2,
 			aircraft.Tag3,
 			aircraft.Category,
-			aircraft.Link,
-			aircraft.ImageLink1,
-			aircraft.ImageLink2,
-			aircraft.ImageLink3,
-			aircraft.ImageLink4,
 			aircraft.Hex,
 			aircraft.Flight,
 			aircraft.R,

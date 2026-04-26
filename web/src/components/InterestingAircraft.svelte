@@ -13,11 +13,6 @@
     let error = null;
     let interval = null;
     let selectedAircraft = null;
-    let imageLoadingStates = {
-        image1: true,
-        image2: true,
-        image3: true
-    };
 
     async function fetchData() {
         
@@ -38,11 +33,6 @@
 
     function showAircraftModal(aircraft) {
         selectedAircraft = aircraft;
-        imageLoadingStates = {
-            image1: true,
-            image2: true,
-            image3: true
-        };
         // @ts-ignore
         document.getElementById(aircraftType).showModal();
     }
@@ -147,53 +137,6 @@
                 {/if}
             </div>
             <p class="text-sm text-gray-600 mb-4">{selectedAircraft.operator} {#if selectedAircraft.flight} - {selectedAircraft.flight} {/if}</p>
-            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                {#if selectedAircraft.image_link_1}
-                    <div class="relative">
-                        {#if imageLoadingStates.image1}
-                            <div class="skeleton h-48 w-full rounded-lg"></div>
-                        {/if}
-                        <img 
-                            src={selectedAircraft.image_link_1} 
-                            alt="{selectedAircraft.registration} photo 1" 
-                            class="w-full h-auto rounded-lg {imageLoadingStates.image1 ? 'absolute inset-0 opacity-0' : ''}"
-                            on:load={() => imageLoadingStates.image1 = false}
-                            on:error={() => imageLoadingStates.image1 = false}
-                        />
-                    </div>
-                {/if}
-                {#if selectedAircraft.image_link_2}
-                    <div class="relative">
-                        {#if imageLoadingStates.image2}
-                            <div class="skeleton h-48 w-full rounded-lg"></div>
-                        {/if}
-                        <img 
-                            src={selectedAircraft.image_link_2} 
-                            alt="{selectedAircraft.registration} photo 2" 
-                            class="w-full h-auto rounded-lg {imageLoadingStates.image2 ? 'absolute inset-0 opacity-0' : ''}"
-                            on:load={() => imageLoadingStates.image2 = false}
-                            on:error={() => imageLoadingStates.image2 = false}
-                        />
-                    </div>
-                {/if}
-                {#if selectedAircraft.image_link_3}
-                    <div class="relative">
-                        {#if imageLoadingStates.image3}
-                            <div class="skeleton h-48 w-full rounded-lg"></div>
-                        {/if}
-                        <img 
-                            src={selectedAircraft.image_link_3} 
-                            alt="{selectedAircraft.registration} photo 3" 
-                            class="w-full h-auto rounded-lg {imageLoadingStates.image3 ? 'absolute inset-0 opacity-0' : ''}"
-                            on:load={() => imageLoadingStates.image3 = false}
-                            on:error={() => imageLoadingStates.image3 = false}
-                        />
-                    </div>
-                {/if}
-            </div>
-            {#if !selectedAircraft.image_link_1 && !selectedAircraft.image_link_2 && !selectedAircraft.image_link_3}
-                <p class="text-center text-gray-500 py-8">No photos available for this aircraft</p>
-            {/if}
         {/if}
         <div class="modal-action">
             <form method="dialog">
