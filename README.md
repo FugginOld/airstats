@@ -96,7 +96,7 @@ Alternatively there are some [Advanced Setup](#advanced-setup) options.
 
 ## Support / Feedback
 
-Airstats is still under early active development. If you're having issues getting it running, or have suggestions/feedback, then the best place to get support is on the [#airstats](https://discord.gg/znkBr2eyev) channel in the [SDR Enthusiasts Discord](https://discord.gg/86Tyxjcd94). Alternatively you can raise an [Issue](https://github.com/FugginOld/airstats/issues) in GitHub, and I'll do my best to support.
+Airstats is still under early active development. If you're having issues getting it running, or have suggestions/feedback, you can raise an [Issue](https://github.com/FugginOld/airstats/issues) in GitHub, and I'll do my best to support.
 
 ## Advanced Setup
 
