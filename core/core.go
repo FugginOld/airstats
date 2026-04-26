@@ -88,7 +88,7 @@ func main() {
 	}
 
 	log.Info().Msg("Checking if interesting aircraft reference data needs updating from aircraft-taxonomy-db")
-	if err := UpsertPlaneAlertDb(pg); err != nil {
+	if err := UpsertAircraftTaxonomyDb(pg); err != nil {
 		log.Error().Msgf("Error updating interesting aircraft data: %v", err)
 		os.Exit(1)
 	}

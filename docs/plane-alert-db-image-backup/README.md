@@ -22,5 +22,5 @@ future, these backups contain all the relevant original code.
 ## Restoring
 
 1. Copy the `.bak` files back to their original paths (drop the `.bak` suffix).
-2. Create a new down-migration that re-adds the columns removed by `000007_remove_image_link_columns.up.sql`.
+2. Run the existing down migration for `000007_remove_image_link_columns.up.sql` (that is, `migrations/000007_remove_image_link_columns.down.sql`), or roll the database back to migration 6, to restore the removed image-link columns.
 3. Rebuild the backend (`go build ./...`) and frontend (`cd web && npm run build`).

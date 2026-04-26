@@ -33,7 +33,7 @@ type GitHubAPIResponse struct {
 	}
 }
 
-func UpsertPlaneAlertDb(pg *postgres) error {
+func UpsertAircraftTaxonomyDb(pg *postgres) error {
 
 	planeAlertUrl, isCustomPlaneAlertUrl := os.LookupEnv("PLANE_DB_URL")
 

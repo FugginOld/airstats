@@ -164,7 +164,7 @@
                                         class="checkbox"
                                     />
                                     <span class="text-m text-base-content/70">
-                                        Disable <a href="https://github.com/FugginOld/aircraft-taxonomy-db#description-of-categories" target="_blank" rel="noopener noreferrer" class="text-accent hover:text-primary transition-colors">aircraft-taxonomy-db</a> tags in modal
+                                        Disable tags in modal
                                     </span>
                                 </label>
                             </div>
