@@ -24,11 +24,6 @@ type Row struct {
 	Tag2         *string
 	Tag3         *string
 	Category     *string
-	Link         *string
-	Image1       *string
-	Image2       *string
-	Image3       *string
-	Image4       *string
 }
 
 type GitHubAPIResponse struct {
@@ -38,12 +33,12 @@ type GitHubAPIResponse struct {
 	}
 }
 
-func UpsertPlaneAlertDb(pg *postgres) error {
+func UpsertAircraftTaxonomyDb(pg *postgres) error {
 
 	planeAlertUrl, isCustomPlaneAlertUrl := os.LookupEnv("PLANE_DB_URL")
 
 	if !isCustomPlaneAlertUrl {
-		planeAlertUrl = "https://raw.githubusercontent.com/sdr-enthusiasts/plane-alert-db/refs/heads/main/plane-alert-db-images.csv"
+		planeAlertUrl = "https://raw.githubusercontent.com/FugginOld/aircraft-taxonomy-db/refs/heads/main/data/aircraft-taxonomy-db.csv"
 	}
 
 	needsUpdating, commitHash, err := checkForUpdates(pg, isCustomPlaneAlertUrl)
@@ -55,11 +50,11 @@ func UpsertPlaneAlertDb(pg *postgres) error {
 	}
 
 	if !needsUpdating {
-		log.Info().Msg("No new data in plane-alert-db, skipping update")
+		log.Info().Msg("No new data in aircraft-taxonomy-db, skipping update")
 		return nil
 	}
 
-	log.Info().Msg("New data found in plane-alert-db, updating interesting aircraft reference data")
+	log.Info().Msg("New data found in aircraft-taxonomy-db, updating interesting aircraft reference data")
 
 	planeAlertRecords, err := fetchCSVData(planeAlertUrl)
 	if err != nil {
@@ -88,11 +83,6 @@ func UpsertPlaneAlertDb(pg *postgres) error {
 		row.Tag2 = getValue(record[headers["$#Tag 2"]])
 		row.Tag3 = getValue(record[headers["$#Tag 3"]])
 		row.Category = getValue(record[headers["Category"]])
-		row.Link = getValue(record[headers["$#Link"]])
-		row.Image1 = getValue(record[headers["#ImageLink"]])
-		row.Image2 = getValue(record[headers["#ImageLink2"]])
-		row.Image3 = getValue(record[headers["#ImageLink3"]])
-		row.Image4 = getValue(record[headers["#ImageLink4"]])
 
 		data[icao] = row
 	}
@@ -100,10 +90,9 @@ func UpsertPlaneAlertDb(pg *postgres) error {
 	insertStatement := `
 		INSERT INTO interesting_aircraft (
 			icao, registration, operator, "type", icao_type,
-			"group", tag1, tag2, tag3, category, link,
-			image_link_1, image_link_2, image_link_3, image_link_4, commit_hash
+			"group", tag1, tag2, tag3, category, commit_hash
 		) VALUES (
-			$1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16
+			$1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11
 		)
 		ON CONFLICT (icao) DO UPDATE SET
 			registration = EXCLUDED.registration,
@@ -115,11 +104,6 @@ func UpsertPlaneAlertDb(pg *postgres) error {
 			tag2 = EXCLUDED.tag2,
 			tag3 = EXCLUDED.tag3,
 			category = EXCLUDED.category,
-			link = EXCLUDED.link,
-			image_link_1 = EXCLUDED.image_link_1,
-			image_link_2 = EXCLUDED.image_link_2,
-			image_link_3 = EXCLUDED.image_link_3,
-			image_link_4 = EXCLUDED.image_link_4,
 			commit_hash = EXCLUDED.commit_hash
 	`
 
@@ -137,11 +121,6 @@ func UpsertPlaneAlertDb(pg *postgres) error {
 			row.Tag2,
 			row.Tag3,
 			row.Category,
-			row.Link,
-			row.Image1,
-			row.Image2,
-			row.Image3,
-			row.Image4,
 			commitHash,
 		)
 	}
@@ -156,7 +135,7 @@ func UpsertPlaneAlertDb(pg *postgres) error {
 		}
 	}
 
-	log.Info().Msgf("Succesfully upserted %d interesting aircraft records from plane-alert-db", len(data))
+	log.Info().Msgf("Successfully upserted %d interesting aircraft records from aircraft-taxonomy-db", len(data))
 
 	return nil
 }
@@ -164,14 +143,14 @@ func UpsertPlaneAlertDb(pg *postgres) error {
 func fetchCSVData(url string) ([][]string, error) {
 	resp, err := httpClient.Get(url)
 	if err != nil {
-		return nil, fmt.Errorf("Error retrieving the CSV for plane-alert-db: %w", err)
+		return nil, fmt.Errorf("Error retrieving the CSV for aircraft-taxonomy-db: %w", err)
 	}
 	defer resp.Body.Close()
 
 	reader := csv.NewReader(resp.Body)
 	records, err := reader.ReadAll()
 	if err != nil {
-		return nil, fmt.Errorf("Error reading CSV records for plane-alert-db: %w", err)
+		return nil, fmt.Errorf("Error reading CSV records for aircraft-taxonomy-db: %w", err)
 	}
 
 	return records, nil
@@ -233,18 +212,18 @@ func checkForUpdates(pg *postgres, isCustom bool) (needsUpdating bool, commitHas
 }
 
 func getLatestCommitHash() (string, error) {
-	resp, err := httpClient.Get("https://api.github.com/repos/sdr-enthusiasts/plane-alert-db/contents/")
+	resp, err := httpClient.Get("https://api.github.com/repos/FugginOld/aircraft-taxonomy-db/contents/data/")
 	if err != nil {
-		return "", fmt.Errorf("Error retrieving latest commit hash for plane-alert-db: %w", err)
+		return "", fmt.Errorf("Error retrieving latest commit hash for aircraft-taxonomy-db: %w", err)
 	}
 	defer resp.Body.Close()
 
 	body, err := io.ReadAll(resp.Body)
 	if err != nil {
-		return "", fmt.Errorf("Error reading response body for latest commit hash for plane-alert-db: %w", err)
+		return "", fmt.Errorf("Error reading response body for latest commit hash for aircraft-taxonomy-db: %w", err)
 	}
 	if resp.StatusCode != 200 {
-		return "", fmt.Errorf("Error when getting hash for plane-alert-db-images.csv: github api returned http code: %s", resp.Status)
+		return "", fmt.Errorf("Error when getting hash for aircraft-taxonomy-db.csv: github api returned http code: %s", resp.Status)
 	}
 
 	var commitResponse GitHubAPIResponse
@@ -254,11 +233,11 @@ func getLatestCommitHash() (string, error) {
 	}
 
 	for _, file := range commitResponse.Files {
-		if file.Filename == "plane-alert-db-images.csv" {
+		if file.Filename == "aircraft-taxonomy-db.csv" {
 			return file.SHA, nil
 		}
 	}
 	log.Error().Msgf("getLatestCommitHash failed, printing commitResponse\n%+v\n", commitResponse)
 	log.Error().Msgf("getLatestCommitHash failed, printing body\n%s\n", body)
-	return "", fmt.Errorf("Error finding plane-alert-db-images.csv commit hash")
+	return "", fmt.Errorf("Error finding aircraft-taxonomy-db.csv commit hash")
 }

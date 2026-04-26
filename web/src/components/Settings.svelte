@@ -164,7 +164,7 @@
                                         class="checkbox"
                                     />
                                     <span class="text-m text-base-content/70">
-                                        Disable <a href="https://github.com/sdr-enthusiasts/plane-alert-db?tab=readme-ov-file#description-of-categories" target="_blank" rel="noopener noreferrer" class="text-accent hover:text-primary transition-colors">plane-alert-db</a> tags in modal
+                                        Disable tags in modal
                                     </span>
                                 </label>
                             </div>

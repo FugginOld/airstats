@@ -426,8 +426,7 @@ func (s *APIServer) getRecentInterestingAircraft(c *gin.Context, group string) {
 		WITH latest_unique_reg AS (
 			SELECT DISTINCT ON (registration) icao, registration, 
 			operator, type, icao_type, "group", 
-			category, tag1, tag2, tag3, image_link_1, 
-			image_link_2, image_link_3,
+			category, tag1, tag2, tag3,
 					hex, flight, seen, seen_epoch
 			FROM interesting_aircraft_seen
 			WHERE "group" = $1
@@ -449,13 +448,12 @@ func (s *APIServer) getRecentInterestingAircraft(c *gin.Context, group string) {
 	for rows.Next() {
 		var icao, registration, operator, aircraftType, icaoType, group, category string
 		var tag1, tag2, tag3 string
-		var imageLink1, imageLink2, imageLink3 *string // Use pointers for nullable fields
 		var hex, flight string
 		var seen *time.Time
 		var seenEpoch float64
 
 		err := rows.Scan(&icao, &registration, &operator, &aircraftType, &icaoType,
-			&group, &category, &tag1, &tag2, &tag3, &imageLink1, &imageLink2, &imageLink3,
+			&group, &category, &tag1, &tag2, &tag3,
 			&hex, &flight, &seen, &seenEpoch)
 		if err != nil {
 			continue
@@ -472,9 +470,6 @@ func (s *APIServer) getRecentInterestingAircraft(c *gin.Context, group string) {
 			"tag1":         tag1,
 			"tag2":         tag2,
 			"tag3":         tag3,
-			"image_link_1": imageLink1,
-			"image_link_2": imageLink2,
-			"image_link_3": imageLink3,
 			"hex":          hex,
 			"flight":       flight,
 			"seen":         seen,

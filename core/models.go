@@ -76,11 +76,6 @@ type InterestingAircraft struct {
 	Tag2         sql.NullString
 	Tag3         sql.NullString
 	Category     sql.NullString
-	Link         sql.NullString
-	ImageLink1   sql.NullString
-	ImageLink2   sql.NullString
-	ImageLink3   sql.NullString
-	ImageLink4   sql.NullString
 	Hex          string
 	Flight       string
 	R            string
