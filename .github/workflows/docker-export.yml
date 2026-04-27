@@ -1,0 +1,143 @@
+name: Docker Image Export
+
+# Reusable workflow: called by release.yml after a tag is pushed.
+# Can also be triggered manually (workflow_dispatch) to export images
+# from any ref and optionally attach them to an existing GitHub Release.
+
+on:
+  workflow_call:
+    inputs:
+      version:
+        description: "Version tag to embed in filenames (e.g. v1.2.3)"
+        required: true
+        type: string
+      upload_to_release:
+        description: "Upload tarballs to the GitHub Release for this tag"
+        required: false
+        type: boolean
+        default: true
+    secrets:
+      DOCKERHUB_USERNAME:
+        required: true
+      DOCKERHUB_TOKEN:
+        required: true
+
+  workflow_dispatch:
+    inputs:
+      version:
+        description: "Version label for output filenames (e.g. v1.2.3 or edge)"
+        required: true
+        default: "edge"
+      upload_to_release:
+        description: "Upload tarballs to the GitHub Release for this tag (only meaningful for v* tags)"
+        required: false
+        type: boolean
+        default: false
+
+permissions:
+  contents: write
+  packages: write
+
+jobs:
+  export:
+    name: Build & export Docker image
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up QEMU
+        uses: docker/setup-qemu-action@v3
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Log in to GHCR
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.repository_owner }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Log in to DockerHub
+        uses: docker/login-action@v3
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+
+      # ── DockerHub / GHCR push ─────────────────────────────────────────────
+      # Builds both platforms in one pass and pushes to both registries.
+      # Tags:  <version>  (e.g. v1.2.3) — always pushed
+      #        latest     — stable releases only (vX.Y.Z with no suffix)
+      - name: Compute tags
+        id: tags
+        run: |
+          VERSION="${{ inputs.version }}"
+          TAGS="ghcr.io/fugginold/airstats:${VERSION}"$'\n'"fugginold/airstats:${VERSION}"
+
+          if [[ "${VERSION}" =~ ^v[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
+            TAGS="${TAGS}"$'\n'"ghcr.io/fugginold/airstats:latest"$'\n'"fugginold/airstats:latest"
+          fi
+          echo "tags<<EOF" >> $GITHUB_OUTPUT
+          echo "${TAGS}" >> $GITHUB_OUTPUT
+          echo "EOF" >> $GITHUB_OUTPUT
+
+      - name: Build and push to GHCR and DockerHub (amd64 + arm64)
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          platforms: linux/amd64,linux/arm64
+          push: true
+          tags: ${{ steps.tags.outputs.tags }}
+          build-args: |
+            VERSION=${{ inputs.version }}
+
+      # ── Tarball export (amd64) ────────────────────────────────────────────
+      - name: Build and export amd64 tarball
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          platforms: linux/amd64
+          outputs: type=docker,dest=/tmp/airstats-amd64.tar
+          build-args: |
+            VERSION=${{ inputs.version }}
+
+      - name: Compress amd64 tarball
+        run: |
+          NAME="airstats-${{ inputs.version }}-amd64.tar.gz"
+          gzip -c /tmp/airstats-amd64.tar > "${NAME}"
+          echo "Created ${NAME} ($(du -sh ${NAME} | cut -f1))"
+
+      # ── Tarball export (arm64) ────────────────────────────────────────────
+      - name: Build and export arm64 tarball
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          platforms: linux/arm64
+          outputs: type=docker,dest=/tmp/airstats-arm64.tar
+          build-args: |
+            VERSION=${{ inputs.version }}
+
+      - name: Compress arm64 tarball
+        run: |
+          NAME="airstats-${{ inputs.version }}-arm64.tar.gz"
+          gzip -c /tmp/airstats-arm64.tar > "${NAME}"
+          echo "Created ${NAME} ($(du -sh ${NAME} | cut -f1))"
+
+      # ── Upload to GitHub Release ──────────────────────────────────────────
+      - name: Upload tarballs to GitHub Release
+        if: ${{ inputs.upload_to_release }}
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ inputs.version }}
+          files: "airstats-${{ inputs.version }}-*.tar.gz"
+
+      # ── Upload as workflow artifact (manual runs) ─────────────────────────
+      - name: Upload tarballs as workflow artifacts
+        if: ${{ !inputs.upload_to_release }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: docker-images-${{ inputs.version }}
+          path: "airstats-${{ inputs.version }}-*.tar.gz"
+          retention-days: 7

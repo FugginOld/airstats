@@ -7,8 +7,6 @@ on:
     branches:
       - "main"
       - "test"
-    tags:
-      - "v*.*.*"
   pull_request:
     branches:
       - "main"
@@ -82,26 +80,3 @@ jobs:
             }}
             COMMIT=${{ steps.useful_vars.outputs.short_sha }}
             DATE=${{ steps.useful_vars.outputs.iso_date }}
-  release:
-        needs: docker
-        if: startsWith(github.ref, 'refs/tags/v')
-        permissions:
-          contents: write
-        runs-on: ubuntu-latest
-        steps:
-            - name: Checkout
-              uses: actions/checkout@v5
-              with:
-                fetch-depth: 0
-            - name: Set up Go
-              uses: actions/setup-go@v5
-              with:
-                go-version-file: 'go.mod'
-            - name: Run GoReleaser
-              uses: goreleaser/goreleaser-action@v6
-              with:
-                distribution: goreleaser
-                version: latest
-                args: release --clean
-              env:
-                GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
