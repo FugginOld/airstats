@@ -8,6 +8,7 @@ on:
 
 permissions:
   contents: write
+  packages: write
 
 jobs:
   test:
@@ -58,8 +59,9 @@ jobs:
           VERSION="${{ steps.version.outputs.version }}"
           # Strip leading 'v' to match CHANGELOG section headers like [1.2.3]
           BARE="${VERSION#v}"
+          HEADER="## [${BARE}]"
           # Extract the block between this version's heading and the next
-          awk "/^## \[${BARE}\]/{found=1; next} found && /^## \[/{exit} found{print}" CHANGELOG.md > /tmp/release-body.md
+          awk -v header="${HEADER}" '$0 == header {found=1; next} found && /^## \[/{exit} found{print}' CHANGELOG.md > /tmp/release-body.md
           if [ ! -s /tmp/release-body.md ]; then
             printf '%s\n' "See [CHANGELOG.md](https://github.com/${{ github.repository }}/blob/${VERSION}/CHANGELOG.md) for details." > /tmp/release-body.md
           fi
