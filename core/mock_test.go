@@ -192,6 +192,7 @@ func newTestServer(db *mockDB) *APIServer {
 		pg:       pg,
 		port:     "8080",
 		settings: NewSettingsService(pg),
+		stats:    NewStatsService(pg),
 	}
 }
 

@@ -7,7 +7,6 @@ import (
 	"net/http"
 	"net/http/httptest"
 	"testing"
-	"time"
 
 	"github.com/gin-gonic/gin"
 	"github.com/jackc/pgx/v5"
@@ -34,39 +33,27 @@ func newRouter(s *APIServer) *gin.Engine {
 		stats.GET("/routes/metrics", s.getRouteMetrics)
 		stats.GET("/routes/airlines", s.getTopAirlines)
 		stats.GET("/routes/routes", s.getTopRoutes)
-		stats.GET("/routes/countries-destination", func(c *gin.Context) { s.getTopCountries(c, "destination", "origin") })
-		stats.GET("/routes/countries-origin", func(c *gin.Context) { s.getTopCountries(c, "origin", "destination") })
-		stats.GET("/routes/airports-domestic", func(c *gin.Context) { s.getTopAirports(c, "=") })
-		stats.GET("/routes/airports-international", func(c *gin.Context) { s.getTopAirports(c, "!=") })
+		stats.GET("/routes/countries-destination", func(c *gin.Context) { s.getTopCountries(c, DestinationCountry) })
+		stats.GET("/routes/countries-origin", func(c *gin.Context) { s.getTopCountries(c, OriginCountry) })
+		stats.GET("/routes/airports-domestic", func(c *gin.Context) { s.getTopAirports(c, DomesticAirports) })
+		stats.GET("/routes/airports-international", func(c *gin.Context) { s.getTopAirports(c, InternationalAirports) })
 
-		stats.GET("/motion/fastest", func(c *gin.Context) { s.getAircraftBySpeed(c, "fastest_aircraft", "DESC") })
-		stats.GET("/motion/slowest", func(c *gin.Context) { s.getAircraftBySpeed(c, "slowest_aircraft", "ASC") })
-		stats.GET("/motion/highest", func(c *gin.Context) { s.getAircraftByAltitude(c, "highest_aircraft", "DESC") })
-		stats.GET("/motion/lowest", func(c *gin.Context) { s.getAircraftByAltitude(c, "lowest_aircraft", "ASC") })
+		stats.GET("/motion/fastest", func(c *gin.Context) { s.getAircraftBySpeed(c, FastestAircraft) })
+		stats.GET("/motion/slowest", func(c *gin.Context) { s.getAircraftBySpeed(c, SlowestAircraft) })
+		stats.GET("/motion/highest", func(c *gin.Context) { s.getAircraftByAltitude(c, HighestAircraft) })
+		stats.GET("/motion/lowest", func(c *gin.Context) { s.getAircraftByAltitude(c, LowestAircraft) })
 
 		stats.GET("/interesting/metrics", s.getInterestingMetrics)
-		stats.GET("/interesting/civilian", func(c *gin.Context) { s.getRecentInterestingAircraft(c, "Civ") })
-		stats.GET("/interesting/police", func(c *gin.Context) { s.getRecentInterestingAircraft(c, "Pol") })
-		stats.GET("/interesting/military", func(c *gin.Context) { s.getRecentInterestingAircraft(c, "Mil") })
-		stats.GET("/interesting/government", func(c *gin.Context) { s.getRecentInterestingAircraft(c, "Gov") })
+		stats.GET("/interesting/civilian", func(c *gin.Context) { s.getRecentInterestingAircraft(c, Civilian) })
+		stats.GET("/interesting/police", func(c *gin.Context) { s.getRecentInterestingAircraft(c, Police) })
+		stats.GET("/interesting/military", func(c *gin.Context) { s.getRecentInterestingAircraft(c, Military) })
+		stats.GET("/interesting/government", func(c *gin.Context) { s.getRecentInterestingAircraft(c, Government) })
 
-		stats.GET("/types/flights/all", func(c *gin.Context) { s.getTopAircraftTypes(c, "all", "flights") })
-		stats.GET("/types/flights/year", func(c *gin.Context) { s.getTopAircraftTypes(c, "year", "flights") })
-		stats.GET("/types/flights/month", func(c *gin.Context) { s.getTopAircraftTypes(c, "month", "flights") })
-		stats.GET("/types/flights/day", func(c *gin.Context) { s.getTopAircraftTypes(c, "day", "flights") })
+		stats.GET("/types/flights/all", func(c *gin.Context) { s.getTopAircraftTypes(c, PeriodAll, CountFlights) })
+		stats.GET("/types/aircraft/all", func(c *gin.Context) { s.getTopAircraftTypes(c, PeriodAll, CountAircraft) })
 
-		stats.GET("/types/aircraft/all", func(c *gin.Context) { s.getTopAircraftTypes(c, "all", "aircraft") })
-		stats.GET("/types/aircraft/year", func(c *gin.Context) { s.getTopAircraftTypes(c, "year", "aircraft") })
-		stats.GET("/types/aircraft/month", func(c *gin.Context) { s.getTopAircraftTypes(c, "month", "aircraft") })
-		stats.GET("/types/aircraft/day", func(c *gin.Context) { s.getTopAircraftTypes(c, "day", "aircraft") })
-
-		stats.GET("/charts/flights/year", func(c *gin.Context) { s.getChartFlightsOverTime(c, "year") })
-		stats.GET("/charts/flights/month", func(c *gin.Context) { s.getChartFlightsOverTime(c, "month") })
-		stats.GET("/charts/flights/day", func(c *gin.Context) { s.getChartFlightsOverTime(c, "day") })
-
-		stats.GET("/charts/aircraft/year", func(c *gin.Context) { s.getChartAircraftOverTime(c, "year") })
-		stats.GET("/charts/aircraft/month", func(c *gin.Context) { s.getChartAircraftOverTime(c, "month") })
-		stats.GET("/charts/aircraft/day", func(c *gin.Context) { s.getChartAircraftOverTime(c, "day") })
+		stats.GET("/charts/flights/day", func(c *gin.Context) { s.getChartOverTime(c, PeriodDay, CountFlights) })
+		stats.GET("/charts/aircraft/day", func(c *gin.Context) { s.getChartOverTime(c, PeriodDay, CountAircraft) })
 	}
 	settings := api.Group("/settings")
 	{
@@ -150,36 +137,87 @@ func TestGetTimezone(t *testing.T) {
 }
 
 // ──────────────────────────────────────────────────────────────────────────────
-// /api/stats/seen/flights
+// Wiring tests: each of these just proves the route calls the right
+// StatsService method and maps its result/error to the right HTTP response.
+// The SQL/scan logic itself is covered directly in stats_service_test.go.
 // ──────────────────────────────────────────────────────────────────────────────
 
-func TestGetFlightsSeenMetrics(t *testing.T) {
-	db := &mockDB{
-		queryRowQueue: []pgx.Row{intRow(1000), intRow(42), intRow(7)},
+func TestHandlers_Success(t *testing.T) {
+	tests := []struct {
+		name string
+		path string
+		db   *mockDB
+	}{
+		{"FlightsSeenMetrics", "/api/stats/seen/flights", &mockDB{queryRowQueue: []pgx.Row{intRow(1), intRow(1), intRow(1)}}},
+		{"AircraftSeenMetrics", "/api/stats/seen/aircraft", &mockDB{queryRowQueue: []pgx.Row{intRow(1), intRow(1), intRow(1)}}},
+		{"RouteMetrics", "/api/stats/routes/metrics", &mockDB{queryRowQueue: []pgx.Row{intRow(1), intRow(1), intRow(1)}}},
+		{"InterestingMetrics", "/api/stats/interesting/metrics", &mockDB{queryRowQueue: []pgx.Row{intRow(1), intRow(1), intRow(1)}}},
+		{"TopAirlines", "/api/stats/routes/airlines", &mockDB{queryQueue: []mockQueryResult{{rows: emptyRows()}}}},
+		{"TopRoutes", "/api/stats/routes/routes", &mockDB{queryQueue: []mockQueryResult{{rows: emptyRows()}}}},
+		{"TopCountriesDestination", "/api/stats/routes/countries-destination", &mockDB{queryQueue: []mockQueryResult{{rows: emptyRows()}}}},
+		{"TopCountriesOrigin", "/api/stats/routes/countries-origin", &mockDB{queryQueue: []mockQueryResult{{rows: emptyRows()}}}},
+		{"TopAirportsDomestic", "/api/stats/routes/airports-domestic", &mockDB{queryQueue: []mockQueryResult{{rows: emptyRows()}}}},
+		{"TopAirportsInternational", "/api/stats/routes/airports-international", &mockDB{queryQueue: []mockQueryResult{{rows: emptyRows()}}}},
+		{"Fastest", "/api/stats/motion/fastest", &mockDB{queryRowQueue: []pgx.Row{noRowsRow()}, queryQueue: []mockQueryResult{{rows: emptyRows()}}}},
+		{"Slowest", "/api/stats/motion/slowest", &mockDB{queryRowQueue: []pgx.Row{noRowsRow()}, queryQueue: []mockQueryResult{{rows: emptyRows()}}}},
+		{"Highest", "/api/stats/motion/highest", &mockDB{queryRowQueue: []pgx.Row{noRowsRow()}, queryQueue: []mockQueryResult{{rows: emptyRows()}}}},
+		{"Lowest", "/api/stats/motion/lowest", &mockDB{queryRowQueue: []pgx.Row{noRowsRow()}, queryQueue: []mockQueryResult{{rows: emptyRows()}}}},
+		{"InterestingCivilian", "/api/stats/interesting/civilian", &mockDB{queryRowQueue: []pgx.Row{noRowsRow()}, queryQueue: []mockQueryResult{{rows: emptyRows()}}}},
+		{"TypesFlights", "/api/stats/types/flights/all", &mockDB{queryQueue: []mockQueryResult{{rows: newMockRows(func(dest ...any) error {
+			*(dest[0].(*string)) = "B738"
+			*(dest[1].(*int)) = 1
+			*(dest[2].(*float64)) = 1
+			return nil
+		})}}}},
+		{"ChartsFlightsDay", "/api/stats/charts/flights/day", &mockDB{}},
+		{"ChartsAircraftDay", "/api/stats/charts/aircraft/day", &mockDB{}},
+		{"Settings", "/api/settings", &mockDB{queryQueue: []mockQueryResult{{rows: newMockRows(func(dest ...any) error {
+			*(dest[0].(*int)) = 1
+			*(dest[1].(*string)) = "k"
+			*(dest[2].(*string)) = "v"
+			*(dest[3].(*string)) = "d"
+			return nil
+		})}}}},
 	}
-	r := newRouter(newTestServer(db))
-	w := doGET(t, r, "/api/stats/seen/flights")
 
-	if w.Code != http.StatusOK {
-		t.Fatalf("status = %d, want 200", w.Code)
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			r := newRouter(newTestServer(tc.db))
+			w := doGET(t, r, tc.path)
+			if w.Code != http.StatusOK {
+				t.Fatalf("status = %d, want 200 (body: %s)", w.Code, w.Body.String())
+			}
+		})
 	}
-	var resp map[string]any
-	if err := json.Unmarshal(w.Body.Bytes(), &resp); err != nil {
-		t.Fatalf("unmarshal: %v", err)
+}
+
+func TestHandlers_DBError_Returns500(t *testing.T) {
+	tests := []struct {
+		name string
+		path string
+	}{
+		{"TopRoutes", "/api/stats/routes/routes"},
+		{"Fastest", "/api/stats/motion/fastest"},
+		{"InterestingCivilian", "/api/stats/interesting/civilian"},
 	}
-	if resp["total_flights"] != float64(1000) {
-		t.Errorf("total_flights = %v, want 1000", resp["total_flights"])
-	}
-	if resp["today_flights"] != float64(42) {
-		t.Errorf("today_flights = %v, want 42", resp["today_flights"])
-	}
-	if resp["hour_flights"] != float64(7) {
-		t.Errorf("hour_flights = %v, want 7", resp["hour_flights"])
+
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			db := &mockDB{
+				queryRowQueue: []pgx.Row{noRowsRow()},
+				queryQueue:    []mockQueryResult{{err: errors.New("db down")}},
+			}
+			r := newRouter(newTestServer(db))
+			w := doGET(t, r, tc.path)
+			if w.Code != http.StatusInternalServerError {
+				t.Fatalf("status = %d, want 500", w.Code)
+			}
+		})
 	}
 }
 
 func TestGetFlightsSeenMetrics_DBError_StillReturns200(t *testing.T) {
-	// When DB calls fail the handler still returns 200 with partial/empty stats.
+	// Metrics handlers are best-effort: a failed sub-query still yields 200.
 	db := &mockDB{
 		queryRowQueue: []pgx.Row{errRow(errors.New("conn lost")), errRow(errors.New("conn lost")), errRow(errors.New("conn lost"))},
 	}
@@ -192,126 +230,10 @@ func TestGetFlightsSeenMetrics_DBError_StillReturns200(t *testing.T) {
 }
 
 // ──────────────────────────────────────────────────────────────────────────────
-// /api/stats/seen/aircraft
-// ──────────────────────────────────────────────────────────────────────────────
-
-func TestGetAircraftSeenMetrics(t *testing.T) {
-	db := &mockDB{
-		queryRowQueue: []pgx.Row{intRow(500), intRow(30), intRow(3)},
-	}
-	r := newRouter(newTestServer(db))
-	w := doGET(t, r, "/api/stats/seen/aircraft")
-
-	if w.Code != http.StatusOK {
-		t.Fatalf("status = %d, want 200", w.Code)
-	}
-	var resp map[string]any
-	if err := json.Unmarshal(w.Body.Bytes(), &resp); err != nil {
-		t.Fatalf("unmarshal: %v", err)
-	}
-	if resp["total_aircraft"] != float64(500) {
-		t.Errorf("total_aircraft = %v, want 500", resp["total_aircraft"])
-	}
-}
-
-// ──────────────────────────────────────────────────────────────────────────────
-// /api/stats/routes/metrics
-// ──────────────────────────────────────────────────────────────────────────────
-
-func TestGetRouteMetrics(t *testing.T) {
-	db := &mockDB{
-		queryRowQueue: []pgx.Row{intRow(800), intRow(60), intRow(150)},
-	}
-	r := newRouter(newTestServer(db))
-	w := doGET(t, r, "/api/stats/routes/metrics")
-
-	if w.Code != http.StatusOK {
-		t.Fatalf("status = %d, want 200", w.Code)
-	}
-	var resp map[string]any
-	if err := json.Unmarshal(w.Body.Bytes(), &resp); err != nil {
-		t.Fatalf("unmarshal: %v", err)
-	}
-	if resp["total_routes"] != float64(800) {
-		t.Errorf("total_routes = %v, want 800", resp["total_routes"])
-	}
-}
-
-// ──────────────────────────────────────────────────────────────────────────────
-// /api/stats/interesting/metrics
-// ──────────────────────────────────────────────────────────────────────────────
-
-func TestGetInterestingMetrics(t *testing.T) {
-	db := &mockDB{
-		queryRowQueue: []pgx.Row{intRow(12), intRow(2), intRow(1)},
-	}
-	r := newRouter(newTestServer(db))
-	w := doGET(t, r, "/api/stats/interesting/metrics")
-
-	if w.Code != http.StatusOK {
-		t.Fatalf("status = %d, want 200", w.Code)
-	}
-	var resp map[string]any
-	if err := json.Unmarshal(w.Body.Bytes(), &resp); err != nil {
-		t.Fatalf("unmarshal: %v", err)
-	}
-	if resp["total_interesting"] != float64(12) {
-		t.Errorf("total_interesting = %v, want 12", resp["total_interesting"])
-	}
-}
-
-// ──────────────────────────────────────────────────────────────────────────────
-// /api/settings GET
-// ──────────────────────────────────────────────────────────────────────────────
-
-func TestGetSettingsHandler_Success(t *testing.T) {
-	db := &mockDB{
-		queryQueue: []mockQueryResult{
-			{rows: newMockRows(
-				func(dest ...any) error {
-					*(dest[0].(*int)) = 1
-					*(dest[1].(*string)) = "route_table_limit"
-					*(dest[2].(*string)) = "5"
-					*(dest[3].(*string)) = "desc"
-					return nil
-				},
-			)},
-		},
-	}
-	r := newRouter(newTestServer(db))
-	w := doGET(t, r, "/api/settings")
-
-	if w.Code != http.StatusOK {
-		t.Fatalf("status = %d, want 200", w.Code)
-	}
-	var resp []any
-	if err := json.Unmarshal(w.Body.Bytes(), &resp); err != nil {
-		t.Fatalf("unmarshal: %v", err)
-	}
-	if len(resp) != 1 {
-		t.Errorf("len(resp) = %d, want 1", len(resp))
-	}
-}
-
-func TestGetSettingsHandler_DBError(t *testing.T) {
-	db := &mockDB{
-		queryQueue: []mockQueryResult{{err: errors.New("db down")}},
-	}
-	r := newRouter(newTestServer(db))
-	w := doGET(t, r, "/api/settings")
-
-	if w.Code != http.StatusInternalServerError {
-		t.Fatalf("status = %d, want 500", w.Code)
-	}
-}
-
-// ──────────────────────────────────────────────────────────────────────────────
 // /api/settings PUT
 // ──────────────────────────────────────────────────────────────────────────────
 
 func TestUpdateSettingsHandler_Success(t *testing.T) {
-	// beginFn returns ok tx (default mockTx), then GetAllSettings Query returns
-	// one row.
 	db := &mockDB{
 		queryQueue: []mockQueryResult{
 			{rows: newMockRows(
@@ -360,299 +282,8 @@ func TestUpdateSettingsHandler_DBError(t *testing.T) {
 }
 
 // ──────────────────────────────────────────────────────────────────────────────
-// Motion endpoints (fastest/slowest/highest/lowest)
-// ──────────────────────────────────────────────────────────────────────────────
-
-// scanSpeedRow fills the 9 columns expected by getFastestAircraft / getSlowestAircraft.
-func scanSpeedRow(dest ...any) error {
-	*(dest[0].(*string)) = "ABCDEF"   // hex
-	*(dest[1].(*string)) = "BA123"    // flight
-	*(dest[2].(*string)) = "G-ABCD"   // registration
-	*(dest[3].(*string)) = "B738"     // type
-	*(dest[4].(**time.Time)) = nil    // first_seen
-	*(dest[5].(**time.Time)) = nil    // last_seen
-	*(dest[6].(*float64)) = 550.5    // ground_speed
-	*(dest[7].(*int)) = 450           // ias
-	*(dest[8].(*int)) = 480           // tas
-	return nil
-}
-
-// scanAltRow fills the 8 columns expected by getHighestAircraft / getLowestAircraft.
-func scanAltRow(dest ...any) error {
-	*(dest[0].(*string)) = "ABCDEF"   // hex
-	*(dest[1].(*string)) = "BA123"    // flight
-	*(dest[2].(*string)) = "G-ABCD"   // registration
-	*(dest[3].(*string)) = "B738"     // type
-	*(dest[4].(**time.Time)) = nil    // first_seen
-	*(dest[5].(**time.Time)) = nil    // last_seen
-	*(dest[6].(*int)) = 38000         // barometric_altitude
-	*(dest[7].(*int)) = 39000         // geometric_altitude
-	return nil
-}
-
-func TestGetFastestAircraft(t *testing.T) {
-	db := &mockDB{
-		queryRowQueue: []pgx.Row{noRowsRow()}, // for getLimit
-		queryQueue:    []mockQueryResult{{rows: newMockRows(scanSpeedRow)}},
-	}
-	r := newRouter(newTestServer(db))
-	w := doGET(t, r, "/api/stats/motion/fastest")
-
-	if w.Code != http.StatusOK {
-		t.Fatalf("status = %d, want 200", w.Code)
-	}
-	var resp []any
-	if err := json.Unmarshal(w.Body.Bytes(), &resp); err != nil {
-		t.Fatalf("unmarshal: %v", err)
-	}
-	if len(resp) != 1 {
-		t.Errorf("len(resp) = %d, want 1", len(resp))
-	}
-}
-
-func TestGetFastestAircraft_DBError(t *testing.T) {
-	db := &mockDB{
-		queryRowQueue: []pgx.Row{noRowsRow()},
-		queryQueue:    []mockQueryResult{{err: errors.New("db down")}},
-	}
-	r := newRouter(newTestServer(db))
-	w := doGET(t, r, "/api/stats/motion/fastest")
-
-	if w.Code != http.StatusInternalServerError {
-		t.Fatalf("status = %d, want 500", w.Code)
-	}
-}
-
-func TestGetSlowestAircraft(t *testing.T) {
-	db := &mockDB{
-		queryRowQueue: []pgx.Row{noRowsRow()},
-		queryQueue:    []mockQueryResult{{rows: newMockRows(scanSpeedRow)}},
-	}
-	r := newRouter(newTestServer(db))
-	w := doGET(t, r, "/api/stats/motion/slowest")
-
-	if w.Code != http.StatusOK {
-		t.Fatalf("status = %d, want 200", w.Code)
-	}
-}
-
-func TestGetHighestAircraft(t *testing.T) {
-	db := &mockDB{
-		queryRowQueue: []pgx.Row{noRowsRow()},
-		queryQueue:    []mockQueryResult{{rows: newMockRows(scanAltRow)}},
-	}
-	r := newRouter(newTestServer(db))
-	w := doGET(t, r, "/api/stats/motion/highest")
-
-	if w.Code != http.StatusOK {
-		t.Fatalf("status = %d, want 200", w.Code)
-	}
-	var resp []any
-	if err := json.Unmarshal(w.Body.Bytes(), &resp); err != nil {
-		t.Fatalf("unmarshal: %v", err)
-	}
-	if len(resp) != 1 {
-		t.Errorf("len(resp) = %d, want 1", len(resp))
-	}
-}
-
-func TestGetLowestAircraft(t *testing.T) {
-	db := &mockDB{
-		queryRowQueue: []pgx.Row{noRowsRow()},
-		queryQueue:    []mockQueryResult{{rows: newMockRows(scanAltRow)}},
-	}
-	r := newRouter(newTestServer(db))
-	w := doGET(t, r, "/api/stats/motion/lowest")
-
-	if w.Code != http.StatusOK {
-		t.Fatalf("status = %d, want 200", w.Code)
-	}
-}
-
-// ──────────────────────────────────────────────────────────────────────────────
-// Route table endpoints
-// ──────────────────────────────────────────────────────────────────────────────
-
-func scanRouteRow(dest ...any) error {
-	*(dest[0].(*string)) = "LHR → CDG"
-	*(dest[1].(*string)) = "LHR"
-	*(dest[2].(*string)) = "London Heathrow"
-	*(dest[3].(*string)) = "CDG"
-	*(dest[4].(*string)) = "Paris Charles de Gaulle"
-	*(dest[5].(*int)) = 48
-	return nil
-}
-
-func TestGetTopRoutes(t *testing.T) {
-	db := &mockDB{
-		queryRowQueue: []pgx.Row{noRowsRow()},
-		queryQueue:    []mockQueryResult{{rows: newMockRows(scanRouteRow)}},
-	}
-	r := newRouter(newTestServer(db))
-	w := doGET(t, r, "/api/stats/routes/routes")
-
-	if w.Code != http.StatusOK {
-		t.Fatalf("status = %d, want 200", w.Code)
-	}
-	var resp []any
-	if err := json.Unmarshal(w.Body.Bytes(), &resp); err != nil {
-		t.Fatalf("unmarshal: %v", err)
-	}
-	if len(resp) != 1 {
-		t.Errorf("len(resp) = %d, want 1", len(resp))
-	}
-}
-
-func TestGetTopRoutes_DBError(t *testing.T) {
-	db := &mockDB{
-		queryRowQueue: []pgx.Row{noRowsRow()},
-		queryQueue:    []mockQueryResult{{err: errors.New("db down")}},
-	}
-	r := newRouter(newTestServer(db))
-	w := doGET(t, r, "/api/stats/routes/routes")
-
-	if w.Code != http.StatusInternalServerError {
-		t.Fatalf("status = %d, want 500", w.Code)
-	}
-}
-
-func TestGetTopAirlines(t *testing.T) {
-	db := &mockDB{
-		queryRowQueue: []pgx.Row{noRowsRow()},
-		queryQueue: []mockQueryResult{{rows: newMockRows(func(dest ...any) error {
-			*(dest[0].(*string)) = "British Airways"
-			*(dest[1].(*string)) = "BAW"
-			*(dest[2].(*string)) = "BA"
-			*(dest[3].(*int)) = 200
-			return nil
-		})}},
-	}
-	r := newRouter(newTestServer(db))
-	w := doGET(t, r, "/api/stats/routes/airlines")
-
-	if w.Code != http.StatusOK {
-		t.Fatalf("status = %d, want 200", w.Code)
-	}
-}
-
-func TestGetTopDestinationCountries(t *testing.T) {
-	db := &mockDB{
-		queryRowQueue: []pgx.Row{noRowsRow()},
-		queryQueue: []mockQueryResult{{rows: newMockRows(func(dest ...any) error {
-			*(dest[0].(*string)) = "France"
-			*(dest[1].(*string)) = "FR"
-			*(dest[2].(*int)) = 150
-			return nil
-		})}},
-	}
-	r := newRouter(newTestServer(db))
-	w := doGET(t, r, "/api/stats/routes/countries-destination")
-	if w.Code != http.StatusOK {
-		t.Fatalf("status = %d, want 200", w.Code)
-	}
-}
-
-func TestGetTopOriginCountries(t *testing.T) {
-	db := &mockDB{
-		queryRowQueue: []pgx.Row{noRowsRow()},
-		queryQueue: []mockQueryResult{{rows: newMockRows(func(dest ...any) error {
-			*(dest[0].(*string)) = "United Kingdom"
-			*(dest[1].(*string)) = "GB"
-			*(dest[2].(*int)) = 120
-			return nil
-		})}},
-	}
-	r := newRouter(newTestServer(db))
-	w := doGET(t, r, "/api/stats/routes/countries-origin")
-	if w.Code != http.StatusOK {
-		t.Fatalf("status = %d, want 200", w.Code)
-	}
-}
-
-func TestGetTopDomesticAirports(t *testing.T) {
-	db := &mockDB{
-		queryRowQueue: []pgx.Row{noRowsRow()},
-		queryQueue: []mockQueryResult{{rows: newMockRows(func(dest ...any) error {
-			*(dest[0].(*string)) = "LHR"
-			*(dest[1].(*string)) = "London Heathrow"
-			*(dest[2].(*string)) = "United Kingdom"
-			*(dest[3].(*int)) = 500
-			return nil
-		})}},
-	}
-	r := newRouter(newTestServer(db))
-	w := doGET(t, r, "/api/stats/routes/airports-domestic")
-	if w.Code != http.StatusOK {
-		t.Fatalf("status = %d, want 200", w.Code)
-	}
-}
-
-func TestGetTopInternationalAirports(t *testing.T) {
-	db := &mockDB{
-		queryRowQueue: []pgx.Row{noRowsRow()},
-		queryQueue: []mockQueryResult{{rows: newMockRows(func(dest ...any) error {
-			*(dest[0].(*string)) = "CDG"
-			*(dest[1].(*string)) = "Paris Charles de Gaulle"
-			*(dest[2].(*string)) = "France"
-			*(dest[3].(*int)) = 300
-			return nil
-		})}},
-	}
-	r := newRouter(newTestServer(db))
-	w := doGET(t, r, "/api/stats/routes/airports-international")
-	if w.Code != http.StatusOK {
-		t.Fatalf("status = %d, want 200", w.Code)
-	}
-}
-
-// ──────────────────────────────────────────────────────────────────────────────
-// Aircraft types
-// ──────────────────────────────────────────────────────────────────────────────
-
-func TestGetTopAircraftTypes_Flights(t *testing.T) {
-	db := &mockDB{
-		queryQueue: []mockQueryResult{{rows: newMockRows(func(dest ...any) error {
-			*(dest[0].(*string)) = "B738"
-			*(dest[1].(*int)) = 55
-			*(dest[2].(*float64)) = 22.0
-			return nil
-		})}},
-	}
-	r := newRouter(newTestServer(db))
-	w := doGET(t, r, "/api/stats/types/flights/all")
-	if w.Code != http.StatusOK {
-		t.Fatalf("status = %d, want 200", w.Code)
-	}
-}
-
-func TestGetTopAircraftTypes_Aircraft(t *testing.T) {
-	db := &mockDB{
-		queryQueue: []mockQueryResult{{rows: newMockRows(func(dest ...any) error {
-			*(dest[0].(*string)) = "A320"
-			*(dest[1].(*int)) = 40
-			*(dest[2].(*float64)) = 18.0
-			return nil
-		})}},
-	}
-	r := newRouter(newTestServer(db))
-	w := doGET(t, r, "/api/stats/types/aircraft/all")
-	if w.Code != http.StatusOK {
-		t.Fatalf("status = %d, want 200", w.Code)
-	}
-}
-
-func TestGetTopAircraftTypes_InvalidParam(t *testing.T) {
-	s := newTestServer(&mockDB{})
-	r := gin.New()
-	r.GET("/test", func(c *gin.Context) { s.getTopAircraftTypes(c, "all", "invalid") })
-	w := doGET(t, r, "/test")
-	if w.Code != http.StatusBadRequest {
-		t.Fatalf("status = %d, want 400", w.Code)
-	}
-}
-
-// ──────────────────────────────────────────────────────────────────────────────
-// /api/stats/above
+// /api/stats/above — env-driven early-return behavior lives in the handler,
+// not StatsService, so it stays covered here.
 // ──────────────────────────────────────────────────────────────────────────────
 
 func TestGetAboveStats_MissingRadius(t *testing.T) {
@@ -674,18 +305,6 @@ func TestGetAboveStats_InvalidRadius(t *testing.T) {
 	}
 }
 
-func TestGetAboveStats_DBError(t *testing.T) {
-	t.Setenv("ABOVE_RADIUS", "50")
-	db := &mockDB{
-		queryQueue: []mockQueryResult{{err: errors.New("db down")}},
-	}
-	r := newRouter(newTestServer(db))
-	w := doGET(t, r, "/api/stats/above")
-	if w.Code != http.StatusInternalServerError {
-		t.Fatalf("status = %d, want 500", w.Code)
-	}
-}
-
 func TestGetAboveStats_EmptyResult(t *testing.T) {
 	t.Setenv("ABOVE_RADIUS", "50")
 	db := &mockDB{
@@ -702,34 +321,6 @@ func TestGetAboveStats_EmptyResult(t *testing.T) {
 	}
 	if len(resp) != 0 {
 		t.Errorf("len(resp) = %d, want 0", len(resp))
-	}
-}
-
-// ──────────────────────────────────────────────────────────────────────────────
-// /api/stats/interesting/civilian
-// ──────────────────────────────────────────────────────────────────────────────
-
-func TestGetRecentInterestingAircraft_EmptyResult(t *testing.T) {
-	db := &mockDB{
-		queryRowQueue: []pgx.Row{noRowsRow()},
-		queryQueue:    []mockQueryResult{{rows: emptyRows()}},
-	}
-	r := newRouter(newTestServer(db))
-	w := doGET(t, r, "/api/stats/interesting/civilian")
-	if w.Code != http.StatusOK {
-		t.Fatalf("status = %d, want 200", w.Code)
-	}
-}
-
-func TestGetRecentInterestingAircraft_DBError(t *testing.T) {
-	db := &mockDB{
-		queryRowQueue: []pgx.Row{noRowsRow()},
-		queryQueue:    []mockQueryResult{{err: errors.New("db down")}},
-	}
-	r := newRouter(newTestServer(db))
-	w := doGET(t, r, "/api/stats/interesting/civilian")
-	if w.Code != http.StatusInternalServerError {
-		t.Fatalf("status = %d, want 500", w.Code)
 	}
 }
 

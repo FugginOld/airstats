@@ -177,3 +177,143 @@ type ChartResponse struct {
 	X      ChartXAxisMeta `json:"x"`
 	Meta   ChartMeta      `json:"meta"`
 }
+
+// --- StatsService result types ---
+
+type FlightsSeenMetrics struct {
+	TotalFlights int `json:"total_flights"`
+	TodayFlights int `json:"today_flights"`
+	HourFlights  int `json:"hour_flights"`
+}
+
+type AircraftSeenMetrics struct {
+	TotalAircraft int `json:"total_aircraft"`
+	TodayAircraft int `json:"today_aircraft"`
+	HourAircraft  int `json:"hour_aircraft"`
+}
+
+type RouteMetrics struct {
+	TotalRoutes int `json:"total_routes"`
+	// json tag typo preserved: web/src/components/MetricRoutes.svelte reads "unqiue_countries" verbatim.
+	UniqueCountries int `json:"unqiue_countries"`
+	UniqueAirports  int `json:"unique_airports"`
+}
+
+type InterestingMetrics struct {
+	TotalInteresting int `json:"total_interesting"`
+	TodayInteresting int `json:"today_interesting"`
+	HourInteresting  int `json:"hour_interesting"`
+}
+
+type AboveAircraft struct {
+	Hex                  string     `json:"hex"`
+	Flight               string     `json:"flight"`
+	Registration         string     `json:"registration"`
+	Type                 string     `json:"type"`
+	FirstSeen            *time.Time `json:"first_seen"`
+	LastSeen             *time.Time `json:"last_seen"`
+	LastSeenLat          float64    `json:"last_seen_lat"`
+	LastSeenLon          float64    `json:"last_seen_lon"`
+	LastSeenDistance     float64    `json:"last_seen_distance"`
+	DestinationDistance  *float64   `json:"destination_distance"`
+	Track                float64    `json:"track"`
+
+	RegType                     *string `json:"reg_type"`
+	IcaoType                    *string `json:"icao_type"`
+	Manufacturer                *string `json:"manufacturer"`
+	RegisteredOwnerCountryName  *string `json:"registered_owner_country_name"`
+	RegisteredOwnerCountryISO   *string `json:"registered_owner_country_iso"`
+	RegisteredOwnerOperatorFlag *string `json:"registered_owner_operator_flag"`
+	RegisteredOwner             *string `json:"registered_owner"`
+	URLPhoto                    *string `json:"url_photo"`
+	URLPhotoThumbnail           *string `json:"url_photo_thumbnail"`
+
+	AirlineName                *string  `json:"airline_name"`
+	AirlineICAO                *string  `json:"airline_icao"`
+	OriginCountryName          *string  `json:"origin_country_name"`
+	OriginCountryISOName       *string  `json:"origin_country_iso_name"`
+	OriginIATACode             *string  `json:"origin_iata_code"`
+	OriginICAOCode             *string  `json:"origin_icao_code"`
+	OriginName                 *string  `json:"origin_name"`
+	DestinationCountryName     *string  `json:"destination_country_name"`
+	DestinationCountryISOName  *string  `json:"destination_country_iso_name"`
+	DestinationIATACode        *string  `json:"destination_iata_code"`
+	DestinationICAOCode        *string  `json:"destination_icao_code"`
+	DestinationName            *string  `json:"destination_name"`
+	RouteDistance              *float64 `json:"route_distance"`
+}
+
+type RecentInterestingAircraft struct {
+	Icao         string     `json:"icao"`
+	Registration string     `json:"registration"`
+	Operator     string     `json:"operator"`
+	Type         string     `json:"type"`
+	IcaoType     string     `json:"icao_type"`
+	Group        string     `json:"group"`
+	Category     string     `json:"category"`
+	Tag1         string     `json:"tag1"`
+	Tag2         string     `json:"tag2"`
+	Tag3         string     `json:"tag3"`
+	Hex          string     `json:"hex"`
+	Flight       string     `json:"flight"`
+	Seen         *time.Time `json:"seen"`
+	SeenEpoch    float64    `json:"seen_epoch"`
+}
+
+type AircraftSpeedRecord struct {
+	Hex               string     `json:"hex"`
+	Flight            string     `json:"flight"`
+	Registration      string     `json:"registration"`
+	Type              string     `json:"type"`
+	FirstSeen         *time.Time `json:"first_seen"`
+	LastSeen          *time.Time `json:"last_seen"`
+	GroundSpeed       float64    `json:"ground_speed"`
+	IndicatedAirSpeed int        `json:"indicated_air_speed"`
+	TrueAirSpeed      int        `json:"true_air_speed"`
+}
+
+type AircraftAltitudeRecord struct {
+	Hex                string     `json:"hex"`
+	Flight             string     `json:"flight"`
+	Registration       string     `json:"registration"`
+	Type               string     `json:"type"`
+	FirstSeen          *time.Time `json:"first_seen"`
+	LastSeen           *time.Time `json:"last_seen"`
+	BarometricAltitude int        `json:"barometric_altitude"`
+	GeometricAltitude  int        `json:"geometric_altitude"`
+}
+
+type AircraftTypeCount struct {
+	AircraftType string  `json:"aircraft_type"`
+	Count        int     `json:"count"`
+	Percentage   float64 `json:"percentage"`
+}
+
+type TopRoute struct {
+	Route               string `json:"route"`
+	OriginIATACode      string `json:"origin_iata_code"`
+	OriginName          string `json:"origin_name"`
+	DestinationIATACode string `json:"destination_iata_code"`
+	DestinationName     string `json:"destination_name"`
+	FlightCount         int    `json:"flight_count"`
+}
+
+type TopCountry struct {
+	CountryName string `json:"country_name"`
+	CountryISO  string `json:"country_iso"`
+	FlightCount int    `json:"flight_count"`
+}
+
+type TopAirline struct {
+	AirlineName string `json:"airline_name"`
+	AirlineICAO string `json:"airline_icao"`
+	AirlineIATA string `json:"airline_iata"`
+	FlightCount int    `json:"flight_count"`
+}
+
+type TopAirport struct {
+	AirportCode    string `json:"airport_code"`
+	AirportName    string `json:"airport_name"`
+	AirportCountry string `json:"airport_country"`
+	FlightCount    int    `json:"flight_count"`
+}
