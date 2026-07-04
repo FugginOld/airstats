@@ -12,22 +12,40 @@ func updateMeasurementStatistics(pg *postgres) {
 
 	aircrafts := getAircraftsForMeasurementStatistics(pg)
 
-	updateLowestAircraft(pg, aircrafts)
-	updateFastestAircraft(pg, aircrafts)
-	updateHighestAircraft(pg, aircrafts)
-	updateSlowestAircraft(pg, aircrafts)
+	updateAircraftByAltitude(pg, aircrafts, LowestAircraft)
+	updateAircraftBySpeed(pg, aircrafts, FastestAircraft)
+	updateAircraftByAltitude(pg, aircrafts, HighestAircraft)
+	updateAircraftBySpeed(pg, aircrafts, SlowestAircraft)
 
 }
 
-func updateLowestAircraft(pg *postgres, aircrafts []Aircraft) {
-	processedMetricName := "lowest_aircraft_processed"
-	tableName := "lowest_aircraft"
+// updateAircraftByAltitude backs both the highest_aircraft and lowest_aircraft
+// record tables — only the processed flag, threshold, and sort direction
+// differ between the two.
+func updateAircraftByAltitude(pg *postgres, aircrafts []Aircraft, record AltitudeRecord) {
+	tableName := string(record)
+	processedMetricName := tableName + "_processed"
 	metricName := "barometric_altitude"
+	descending := record.direction() == "DESC"
+
+	var isProcessed func(Aircraft) bool
+	var threshold int
+	var filterNearZero bool
+
+	switch record {
+	case HighestAircraft:
+		isProcessed = func(a Aircraft) bool { return a.HighestProcessed }
+		threshold = getHighestAircraftFloor(pg)
+		filterNearZero = false
+	case LowestAircraft:
+		isProcessed = func(a Aircraft) bool { return a.LowestProcessed }
+		threshold = getLowestAircraftCeiling(pg)
+		filterNearZero = true
+	}
 
 	var aircraftToProcess []Aircraft
-
 	for _, aircraft := range aircrafts {
-		if !aircraft.LowestProcessed {
+		if !isProcessed(aircraft) {
 			aircraftToProcess = append(aircraftToProcess, aircraft)
 		}
 	}
@@ -36,19 +54,23 @@ func updateLowestAircraft(pg *postgres, aircrafts []Aircraft) {
 		return
 	}
 
-	lowestAircraftCeiling := getLowestAircraftCeiling(pg)
-
 	sort.Slice(aircraftToProcess, func(i, j int) bool {
+		if descending {
+			return aircraftToProcess[i].AltBaro > aircraftToProcess[j].AltBaro
+		}
 		return aircraftToProcess[i].AltBaro < aircraftToProcess[j].AltBaro
 	})
 
 	var aircraftsToInsert []Aircraft
-
 	for _, aircraft := range aircraftToProcess {
-		if aircraft.AltBaro < 1 {
+		if filterNearZero && aircraft.AltBaro < 1 {
 			continue
 		}
-		if aircraft.AltBaro < lowestAircraftCeiling {
+		beyondThreshold := aircraft.AltBaro < threshold
+		if descending {
+			beyondThreshold = aircraft.AltBaro > threshold
+		}
+		if beyondThreshold {
 			aircraftsToInsert = append(aircraftsToInsert, aircraft)
 		} else {
 			break
@@ -59,7 +81,7 @@ func updateLowestAircraft(pg *postgres, aircrafts []Aircraft) {
 
 	for _, aircraft := range aircraftsToInsert {
 		insertStatement := `
-			INSERT INTO lowest_aircraft (
+			INSERT INTO ` + tableName + ` (
 				hex,
 				flight,
 				registration,
@@ -94,111 +116,42 @@ func updateLowestAircraft(pg *postgres, aircrafts []Aircraft) {
 	for i := 0; i < len(aircraftsToInsert); i++ {
 		_, err := br.Exec()
 		if err != nil {
-			log.Error().Err(err).Msg("updateLowestAircraft() - Unable to insert data")
+			log.Error().Err(err).Msgf("updateAircraftByAltitude(%s) - Unable to insert data", tableName)
 		}
 	}
-	DeleteExcessRows(pg, tableName, metricName, "DESC", 50)
 
-	if len(aircraftToProcess) > 0 {
-		MarkProcessed(pg, processedMetricName, aircraftToProcess)
-	}
+	DeleteExcessRows(pg, tableName, metricName, record.deleteSortOrder(), 50)
 
+	MarkProcessed(pg, processedMetricName, aircraftToProcess)
 }
 
-func updateHighestAircraft(pg *postgres, aircrafts []Aircraft) {
-
-	processedMetricName := "highest_aircraft_processed"
-	tableName := "highest_aircraft"
-	metricName := "barometric_altitude"
-
-	var aircraftToProcess []Aircraft
-
-	for _, aircraft := range aircrafts {
-		if !aircraft.HighestProcessed {
-			aircraftToProcess = append(aircraftToProcess, aircraft)
-		}
-	}
-
-	if len(aircraftToProcess) == 0 {
-		return
-	}
-
-	highestAircraftFloor := getHighestAircraftFloor(pg)
-
-	sort.Slice(aircraftToProcess, func(i, j int) bool {
-		return aircraftToProcess[i].AltBaro > aircraftToProcess[j].AltBaro
-	})
-
-	var aircraftsToInsert []Aircraft
-
-	for _, aircraft := range aircraftToProcess {
-		if aircraft.AltBaro > highestAircraftFloor {
-			aircraftsToInsert = append(aircraftsToInsert, aircraft)
-		} else {
-			break
-		}
-	}
-
-	batch := &pgx.Batch{}
-
-	for _, aircraft := range aircraftsToInsert {
-		insertStatement := `
-			INSERT INTO highest_aircraft (
-				hex,
-				flight,
-				registration,
-				type,
-				first_seen,
-				last_seen,
-				barometric_altitude,
-				geometric_altitude)
-			VALUES (
-				$1, $2, $3, $4, $5, $6, $7, $8)
-			ON CONFLICT (hex, first_seen)
-			DO UPDATE SET
-				barometric_altitude = EXCLUDED.barometric_altitude,
-				geometric_altitude = EXCLUDED.geometric_altitude,
-				last_seen = EXCLUDED.last_seen`
-
-		batch.Queue(
-			insertStatement,
-			aircraft.Hex,
-			aircraft.Flight,
-			aircraft.R,
-			aircraft.T,
-			aircraft.FirstSeen,
-			aircraft.LastSeen,
-			aircraft.AltBaro,
-			aircraft.AltGeom)
-	}
-
-	br := pg.db.SendBatch(context.Background(), batch)
-	defer br.Close()
-
-	for i := 0; i < len(aircraftsToInsert); i++ {
-		_, err := br.Exec()
-		if err != nil {
-			log.Error().Err(err).Msg("updateHighestAircraft() - Unable to insert data")
-		}
-	}
-
-	DeleteExcessRows(pg, tableName, metricName, "ASC", 50)
-
-	if len(aircraftToProcess) > 0 {
-		MarkProcessed(pg, processedMetricName, aircraftToProcess)
-	}
-}
-
-func updateSlowestAircraft(pg *postgres, aircrafts []Aircraft) {
-
-	processedMetricName := "slowest_aircraft_processed"
-	tableName := "slowest_aircraft"
+// updateAircraftBySpeed backs both the fastest_aircraft and slowest_aircraft
+// record tables — only the processed flag, threshold, and sort direction
+// differ between the two.
+func updateAircraftBySpeed(pg *postgres, aircrafts []Aircraft, record SpeedRecord) {
+	tableName := string(record)
+	processedMetricName := tableName + "_processed"
 	metricName := "ground_speed"
+	descending := record.direction() == "DESC"
+
+	var isProcessed func(Aircraft) bool
+	var threshold float64
+	var filterNearZero bool
+
+	switch record {
+	case FastestAircraft:
+		isProcessed = func(a Aircraft) bool { return a.FastestProcessed }
+		threshold = getFastestAircraftFloor(pg)
+		filterNearZero = false
+	case SlowestAircraft:
+		isProcessed = func(a Aircraft) bool { return a.SlowestProcessed }
+		threshold = getSlowestAircraftCeiling(pg)
+		filterNearZero = true
+	}
 
 	var aircraftToProcess []Aircraft
-
 	for _, aircraft := range aircrafts {
-		if !aircraft.SlowestProcessed {
+		if !isProcessed(aircraft) {
 			aircraftToProcess = append(aircraftToProcess, aircraft)
 		}
 	}
@@ -207,20 +160,23 @@ func updateSlowestAircraft(pg *postgres, aircrafts []Aircraft) {
 		return
 	}
 
-	slowestAircraftCeiling := getSlowestAircraftCeiling(pg)
-
 	sort.Slice(aircraftToProcess, func(i, j int) bool {
+		if descending {
+			return aircraftToProcess[i].Gs > aircraftToProcess[j].Gs
+		}
 		return aircraftToProcess[i].Gs < aircraftToProcess[j].Gs
 	})
 
 	var aircraftsToInsert []Aircraft
-
 	for _, aircraft := range aircraftToProcess {
-		if aircraft.Gs < 1 {
+		if filterNearZero && aircraft.Gs < 1 {
 			continue
 		}
-
-		if aircraft.Gs < slowestAircraftCeiling {
+		beyondThreshold := aircraft.Gs < threshold
+		if descending {
+			beyondThreshold = aircraft.Gs > threshold
+		}
+		if beyondThreshold {
 			aircraftsToInsert = append(aircraftsToInsert, aircraft)
 		} else {
 			break
@@ -231,7 +187,7 @@ func updateSlowestAircraft(pg *postgres, aircrafts []Aircraft) {
 
 	for _, aircraft := range aircraftsToInsert {
 		insertStatement := `
-			INSERT INTO slowest_aircraft (
+			INSERT INTO ` + tableName + ` (
 				hex,
 				flight,
 				registration,
@@ -259,8 +215,8 @@ func updateSlowestAircraft(pg *postgres, aircrafts []Aircraft) {
 			aircraft.FirstSeen,
 			aircraft.LastSeen,
 			aircraft.Gs,
-			aircraft.Tas,
-			aircraft.Ias)
+			aircraft.Ias,
+			aircraft.Tas)
 	}
 
 	br := pg.db.SendBatch(context.Background(), batch)
@@ -269,107 +225,18 @@ func updateSlowestAircraft(pg *postgres, aircrafts []Aircraft) {
 	for i := 0; i < len(aircraftsToInsert); i++ {
 		_, err := br.Exec()
 		if err != nil {
-			log.Error().Err(err).Msg("updateSlowestAircraft() - Unable to insert data")
+			log.Error().Err(err).Msgf("updateAircraftBySpeed(%s) - Unable to insert data", tableName)
 		}
 	}
 
-	DeleteExcessRows(pg, tableName, metricName, "DESC", 50)
+	DeleteExcessRows(pg, tableName, metricName, record.deleteSortOrder(), 50)
 
-	if len(aircraftToProcess) > 0 {
-		MarkProcessed(pg, processedMetricName, aircraftToProcess)
-	}
-}
-
-func updateFastestAircraft(pg *postgres, aircrafts []Aircraft) {
-
-	processedMetricName := "fastest_aircraft_processed"
-	tableName := "fastest_aircraft"
-	metricName := "ground_speed"
-
-	var aircraftToProcess []Aircraft
-
-	for _, aircraft := range aircrafts {
-		if !aircraft.FastestProcessed {
-			aircraftToProcess = append(aircraftToProcess, aircraft)
-		}
-	}
-
-	if len(aircraftToProcess) == 0 {
-		return
-	}
-
-	fastestAircraftFloor := getFastestAircraftFloor(pg)
-
-	sort.Slice(aircraftToProcess, func(i, j int) bool {
-		return aircraftToProcess[i].Gs > aircraftToProcess[j].Gs
-	})
-
-	var aircraftsToInsert []Aircraft
-
-	for _, aircraft := range aircraftToProcess {
-		if aircraft.Gs > fastestAircraftFloor {
-			aircraftsToInsert = append(aircraftsToInsert, aircraft)
-		} else {
-			break
-		}
-	}
-
-	batch := &pgx.Batch{}
-
-	for _, aircraft := range aircraftsToInsert {
-		insertStatement := `
-			INSERT INTO fastest_aircraft (
-				hex,
-				flight,
-				registration,
-				type,
-				first_seen,
-				last_seen,
-				ground_speed,
-				indicated_air_speed,
-				true_air_speed)
-			VALUES (
-				$1, $2, $3, $4, $5, $6, $7, $8, $9)
-			ON CONFLICT (hex, first_seen)
-			DO UPDATE SET
-				ground_speed = EXCLUDED.ground_speed,
-				indicated_air_speed = EXCLUDED.indicated_air_speed,
-				true_air_speed = EXCLUDED.true_air_speed,
-				last_seen = EXCLUDED.last_seen`
-
-		batch.Queue(
-			insertStatement,
-			aircraft.Hex,
-			aircraft.Flight,
-			aircraft.R,
-			aircraft.T,
-			aircraft.FirstSeen,
-			aircraft.LastSeen,
-			aircraft.Gs,
-			aircraft.Tas,
-			aircraft.Ias)
-	}
-
-	br := pg.db.SendBatch(context.Background(), batch)
-	defer br.Close()
-
-	for i := 0; i < len(aircraftsToInsert); i++ {
-		_, err := br.Exec()
-		if err != nil {
-			log.Error().Err(err).Msg("updateFastestAircraft() - Unable to insert data")
-		}
-	}
-
-	DeleteExcessRows(pg, tableName, metricName, "ASC", 50)
-
-	if len(aircraftToProcess) > 0 {
-		MarkProcessed(pg, processedMetricName, aircraftToProcess)
-	}
+	MarkProcessed(pg, processedMetricName, aircraftToProcess)
 }
 
 func getAircraftsForMeasurementStatistics(pg *postgres) []Aircraft {
 
-	query := `SELECT id, hex, flight, r, t, first_seen, last_seen, alt_baro, alt_geom, gs, ias, tas, 
+	query := `SELECT id, hex, flight, r, t, first_seen, last_seen, alt_baro, alt_geom, gs, ias, tas,
 				lowest_aircraft_processed, highest_aircraft_processed, fastest_aircraft_processed, slowest_aircraft_processed
 				FROM aircraft_data
 				WHERE lowest_aircraft_processed = false OR

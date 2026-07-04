@@ -26,6 +26,16 @@ func (r SpeedRecord) direction() string {
 	return "ASC"
 }
 
+// deleteSortOrder is the opposite of direction(): DeleteExcessRows prunes the
+// least-extreme rows, which sit at the opposite end of the ordering that
+// keeps the most extreme ones.
+func (r SpeedRecord) deleteSortOrder() string {
+	if r.direction() == "DESC" {
+		return "ASC"
+	}
+	return "DESC"
+}
+
 type AltitudeRecord string
 
 const (
@@ -38,6 +48,16 @@ func (r AltitudeRecord) direction() string {
 		return "DESC"
 	}
 	return "ASC"
+}
+
+// deleteSortOrder is the opposite of direction(): DeleteExcessRows prunes the
+// least-extreme rows, which sit at the opposite end of the ordering that
+// keeps the most extreme ones.
+func (r AltitudeRecord) deleteSortOrder() string {
+	if r.direction() == "DESC" {
+		return "ASC"
+	}
+	return "DESC"
 }
 
 type CountrySide string
