@@ -1,0 +1,22 @@
+[Unit]
+Description=Airstats API server
+After=network-online.target postgresql.service
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=airstats
+Group=airstats
+WorkingDirectory=/opt/airstats/core
+EnvironmentFile=/etc/airstats/airstats.env
+Environment=DOCKER_ENV=true
+ExecStart=/opt/airstats/core/airstats
+Restart=on-failure
+RestartSec=5
+
+NoNewPrivileges=true
+ProtectSystem=strict
+ProtectHome=true
+
+[Install]
+WantedBy=multi-user.target

@@ -126,6 +126,53 @@ The intention is for Airstats to be run via the [provided Docker containers](#se
   * Start the webserver with `npm run dev -- --host`
 * See [`build`](/scripts/build) for a script to automate some of this
 
+### Running as a native systemd service (Linux, no Docker)
+
+For a permanent install on a Linux box without containers: compile the
+binary and frontend once, then let systemd + nginx supervise them the same
+way the Docker image's s6-overlay does (Go binary on `127.0.0.1:8080`,
+nginx serving the built frontend and reverse-proxying `/api/`).
+
+1. Build both pieces:
+
+   ```bash
+   cd core && go build -o airstats .
+   cd ../web && npm ci && npm run build   # outputs web/dist
+   ```
+
+2. Install to `/opt/airstats`:
+
+   ```bash
+   sudo useradd --system --no-create-home --shell /usr/sbin/nologin airstats
+   sudo mkdir -p /opt/airstats/core /opt/airstats/web /etc/airstats
+   sudo cp core/airstats /opt/airstats/core/
+   sudo cp -r web/dist/. /opt/airstats/web/
+   sudo cp -r migrations /opt/airstats/migrations   # required: loaded from ../migrations relative to core/
+   sudo cp -r docs /opt/airstats/docs   # optional, only used for the startup banner
+   sudo chown -R airstats:airstats /opt/airstats
+   ```
+
+3. Write `/etc/airstats/airstats.env` with the [Environment Variables](#environment-variables)
+   for your setup (`DB_HOST`, `DB_USER`, `DB_PASSWORD`, `DB_NAME`, `READSB_AIRCRAFT_JSON`,
+   `LAT`, `LON`, `DOMESTIC_COUNTRY_ISO`, etc. — plain `KEY=VALUE` lines, no quoting/export).
+
+4. Install the unit and reverse proxy:
+
+   ```bash
+   sudo cp deploy/systemd/airstats.service /etc/systemd/system/
+   sudo cp deploy/nginx/airstats.conf /etc/nginx/conf.d/
+   sudo systemctl daemon-reload
+   sudo systemctl enable --now airstats
+   sudo nginx -t && sudo systemctl reload nginx
+   ```
+
+5. Open `http://<host>/`. Logs: `journalctl -u airstats -f`.
+
+`DOCKER_ENV=true` is set in the unit deliberately — it stops the app's
+built-in `go-daemon` self-daemonization (which exists for the "run the
+raw binary with no supervisor" case in [Running locally](#running-locally))
+so systemd, not the app, owns process supervision and restarts.
+
 ## Advanced Use Cases
 
 ### Custom aircraft-taxonomy-db csv
