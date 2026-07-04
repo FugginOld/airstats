@@ -1,12 +1,12 @@
 <script>
     import { onMount, onDestroy } from 'svelte';
-    import "/node_modules/flag-icons/css/flag-icons.min.css";
     import SkeletonRouteTable from './SkeletonRouteTable.svelte';
     import { refreshRouteData } from '../stores/settings';
 
+    export let endpoint;
+    export let title;
 
     let data = [];
-    let endpoint = 'api/stats/routes/countries-origin'
     let loading = true;
     let error = null;
     let interval = null;
@@ -59,21 +59,10 @@
     </div>
 {:else}
     <ul class="list bg-base-100 rounded-box shadow-md soft-divider">
-    <li class="p-4 pb-2 text-xs opacity-60 tracking-wide">Top Origin Countries</li>
+    <li class="p-4 pb-2 text-xs opacity-60 tracking-wide">{title}</li>
 
-
-    {#each data as topCountry, index}
-    <li class="list-row">
-        <div><span class="text-4xl fi fi-{topCountry.country_iso.toLowerCase()}"></span></div>
-        <div class="list-col-grow">
-        <div class="font-medium">{topCountry.country_name}</div>
-        <div class="text-xs uppercase font-semibold opacity-60">{topCountry.country_iso}</div>
-        </div>
-        <div class="text-right">
-            <div class="font-semibold">{topCountry.flight_count.toLocaleString()}</div>
-            <div class="text-xs opacity-60">flights</div>
-        </div>
-    </li>
+    {#each data as row, index}
+        <slot {row} {index} />
     {/each}
     </ul>
 {/if}

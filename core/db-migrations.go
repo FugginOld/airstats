@@ -7,16 +7,16 @@ import (
 	"github.com/rs/zerolog/log"
 
 	"github.com/golang-migrate/migrate/v4"
-	postgres_migrate "github.com/golang-migrate/migrate/v4/database/postgres"
+	pgx_migrate "github.com/golang-migrate/migrate/v4/database/pgx/v5"
 	_ "github.com/golang-migrate/migrate/v4/source/file"
-	_ "github.com/lib/pq"
+	_ "github.com/jackc/pgx/v5/stdlib"
 )
 
 func RunDatabaseMigrations() error {
 
 	// Setup db connection
 	url := GetConnectionUrl() + "?sslmode=disable"
-	db, err := sql.Open("postgres", url)
+	db, err := sql.Open("pgx", url)
 	if err != nil {
 		return fmt.Errorf("Error connecting to the database: %w", err)
 	}
@@ -63,14 +63,14 @@ func RunDatabaseMigrations() error {
 }
 
 func initMigrator(db *sql.DB) (*migrate.Migrate, error) {
-	driver, err := postgres_migrate.WithInstance(db, &postgres_migrate.Config{})
+	driver, err := pgx_migrate.WithInstance(db, &pgx_migrate.Config{})
 	if err != nil {
 		return nil, fmt.Errorf("Error creating migration driver: %w", err)
 	}
 
 	migrator, err := migrate.NewWithDatabaseInstance(
 		"file://../migrations",
-		"postgres",
+		"pgx5",
 		driver,
 	)
 	if err != nil {

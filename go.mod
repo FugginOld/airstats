@@ -8,7 +8,6 @@ require (
 	github.com/gin-gonic/gin v1.10.1
 	github.com/golang-migrate/migrate/v4 v4.19.0
 	github.com/jackc/pgx/v5 v5.9.2
-	github.com/lib/pq v1.10.9
 	github.com/rs/zerolog v1.34.0
 	github.com/sevlyar/go-daemon v0.1.6
 )
@@ -25,6 +24,7 @@ require (
 	github.com/goccy/go-json v0.10.5 // indirect
 	github.com/hashicorp/errwrap v1.1.0 // indirect
 	github.com/hashicorp/go-multierror v1.1.1 // indirect
+	github.com/jackc/pgerrcode v0.0.0-20220416144525-469b46aa5efa // indirect
 	github.com/json-iterator/go v1.1.12 // indirect
 	github.com/klauspost/cpuid/v2 v2.3.0 // indirect
 	github.com/kr/text v0.2.0 // indirect
