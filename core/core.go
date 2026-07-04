@@ -82,7 +82,7 @@ func main() {
 
 	// Setup db
 	log.Info().Msg("Checking to see if any database initialisation / migrations are needed")
-	if err := RunDatabaseMigrations(); err != nil {
+	if err := RunDatabaseMigrations(pg); err != nil {
 		log.Error().Err(err).Msg("Error initialising or migrating the database")
 		os.Exit(1)
 	}

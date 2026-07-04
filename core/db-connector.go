@@ -11,15 +11,20 @@ import (
 
 type postgres struct {
 	db DB
+	// pool is the same connection pool as db, held as its concrete type so
+	// callers that need a *pgxpool.Pool directly (e.g. RunDatabaseMigrations,
+	// via stdlib.OpenDBFromPool) can share it instead of opening a second,
+	// independent connection.
+	pool *pgxpool.Pool
 }
 
 func NewPG(ctx context.Context, connString string) (*postgres, error) {
-	db, err := pgxpool.New(ctx, connString)
+	pool, err := pgxpool.New(ctx, connString)
 	if err != nil {
 		log.Error().Err(err).Msg("Unable to connect to database")
 	}
 
-	return &postgres{db}, nil
+	return &postgres{db: pool, pool: pool}, nil
 }
 
 func (pg *postgres) Ping(ctx context.Context) error {

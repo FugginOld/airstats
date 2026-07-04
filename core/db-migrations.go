@@ -9,17 +9,15 @@ import (
 	"github.com/golang-migrate/migrate/v4"
 	pgx_migrate "github.com/golang-migrate/migrate/v4/database/pgx/v5"
 	_ "github.com/golang-migrate/migrate/v4/source/file"
-	_ "github.com/jackc/pgx/v5/stdlib"
+	"github.com/jackc/pgx/v5/stdlib"
 )
 
-func RunDatabaseMigrations() error {
+// RunDatabaseMigrations runs migrations through pg's existing connection
+// pool (via stdlib.OpenDBFromPool) instead of opening a second, independent
+// connection to Postgres.
+func RunDatabaseMigrations(pg *postgres) error {
 
-	// Setup db connection
-	url := GetConnectionUrl() + "?sslmode=disable"
-	db, err := sql.Open("pgx", url)
-	if err != nil {
-		return fmt.Errorf("Error connecting to the database: %w", err)
-	}
+	db := stdlib.OpenDBFromPool(pg.pool)
 	defer db.Close()
 
 	// Check for existing pre-script db
