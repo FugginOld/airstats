@@ -1,46 +1,17 @@
 <script>
-    import { onMount, onDestroy } from "svelte";
     import NumberFlow from "@number-flow/svelte";
     import { IconPlane, IconPlaneDeparture, IconPlaneArrival } from "@tabler/icons-svelte";
     import Status from "./Status.svelte";
+    import { createPolledResource } from "../lib/pollResource.js";
 
-    let endpoint = "api/stats/above";
+    const resource = createPolledResource("api/stats/above", { refreshMs: 2000 });
+    $: data = $resource.data || [];
+    $: loading = $resource.loading;
+    $: error = $resource.error;
 
-    let refreshRate = 2000;
-    let data = [];
-    let loading = true;
-    let error = null;
-    let interval = null;
     let selectedAircraft = null;
     let selectedAircraftHex = null;
     let selectedAircraftImage = null;
-
-    async function fetchData() {
-        try {
-            const response = await fetch(endpoint);
-            if (!response.ok) {
-                throw new Error(`{response.status}`);
-            }
-            const result = await response.json();
-            data = result;
-            error = null;
-        } catch (err) {
-            error = err.message;
-        } finally {
-            loading = false;
-        }
-    }
-
-    onMount(() => {
-        fetchData();
-        interval = setInterval(fetchData, refreshRate);
-    });
-
-    onDestroy(() => {
-        if (interval) {
-            clearInterval(interval);
-        }
-    });
 
     function getSlottedAircraft(aircraftList) {
         const slots = [null, null, null, null, null];

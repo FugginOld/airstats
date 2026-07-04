@@ -1,48 +1,15 @@
 <script>
-    import { onMount, onDestroy } from 'svelte';
     import SkeletonRouteTable from './SkeletonRouteTable.svelte';
     import { refreshRouteData } from '../stores/settings';
+    import { createPolledResource } from '../lib/pollResource.js';
 
     export let endpoint;
     export let title;
 
-    let data = [];
-    let loading = true;
-    let error = null;
-    let interval = null;
-
-    async function fetchData() {
-
-        try {
-            const response = await fetch(endpoint);
-            if (!response.ok) {
-                throw new Error(`${response.status}`);
-            }
-            const result = await response.json();
-            data = result;
-            error = null;
-        } catch (err) {
-            error = err.message;
-        } finally {
-            loading = false;
-        }
-    }
-
-    onMount(() => {
-        fetchData();
-        interval = setInterval(fetchData, 60000);
-    })
-
-    onDestroy(() => {
-        if (interval) {
-            clearInterval(interval);
-        }
-    });
-
-    // Refresh when settings change
-    $: if ($refreshRouteData) {
-        fetchData();
-    }
+    const resource = createPolledResource(endpoint, { refreshMs: 60000, refreshTrigger: refreshRouteData });
+    $: data = $resource.data || [];
+    $: loading = $resource.loading;
+    $: error = $resource.error;
 </script>
 
  {#if loading}

@@ -1,35 +1,18 @@
 <script>
-    import { onMount, onDestroy } from 'svelte'
     import { settings, refreshInterestingData } from '../stores/settings';
+    import { createPolledResource } from '../lib/pollResource.js';
 
     export let endpoint;
     export let title;
     export let icon;
     export let aircraftType;
 
-    let refreshRate = 10000
-    let data = [];
-    let loading = true;
-    let error = null;
-    let interval = null;
-    let selectedAircraft = null;
+    const resource = createPolledResource(endpoint, { refreshMs: 10000, refreshTrigger: refreshInterestingData });
+    $: data = $resource.data || [];
+    $: loading = $resource.loading;
+    $: error = $resource.error;
 
-    async function fetchData() {
-        
-        try {
-            const response = await fetch(endpoint);
-            if(!response.ok) {
-                throw new Error(`{response.status}`);
-            }
-            const result = await response.json();
-            data = result;
-            error = null
-        } catch (err) {
-            error = err.message;
-        } finally {
-            loading = false;
-        }
-    }
+    let selectedAircraft = null;
 
     function showAircraftModal(aircraft) {
         selectedAircraft = aircraft;
@@ -39,22 +22,6 @@
 
     function closeModal() {
         selectedAircraft = null;
-    }
-
-    onMount(() => {
-        fetchData();
-        interval = setInterval(fetchData, refreshRate)
-    })
-
-    onDestroy(() => {
-        if (interval) {
-            clearInterval(interval)
-        }
-    });
-
-    // Refresh when settings change
-    $: if ($refreshInterestingData) {
-        fetchData();
     }
 
     $: disableTags = $settings['disable_planealertdb_tags']?.setting_value === 'true';

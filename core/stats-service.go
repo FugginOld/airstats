@@ -213,13 +213,13 @@ func (s *StatsService) GetInterestingMetrics(ctx context.Context, tz string) (In
 	}
 
 	if err := s.pg.db.QueryRow(ctx,
-		"SELECT COUNT(*) FROM interesting_aircraft_seen WHERE DATE(first_seen AT TIME ZONE $1) = CURRENT_DATE", tz,
+		"SELECT COUNT(*) FROM interesting_aircraft_seen WHERE DATE(seen AT TIME ZONE $1) = CURRENT_DATE", tz,
 	).Scan(&metrics.TodayInteresting); err != nil {
 		log.Error().Err(err).Msg("Failed to count today's interesting aircraft")
 	}
 
 	if err := s.pg.db.QueryRow(ctx,
-		"SELECT COUNT(*) FROM interesting_aircraft_seen WHERE first_seen >= NOW() - INTERVAL '1 hour'",
+		"SELECT COUNT(*) FROM interesting_aircraft_seen WHERE seen >= NOW() - INTERVAL '1 hour'",
 	).Scan(&metrics.HourInteresting); err != nil {
 		log.Error().Err(err).Msg("Failed to count past-hour interesting aircraft")
 	}
